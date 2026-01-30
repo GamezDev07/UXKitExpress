@@ -1,13 +1,15 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Check, Sparkles, Zap, Rocket, Building2 } from 'lucide-react'
 import Header from '../components/Header'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 
 export default function PricingPage() {
-    const { userPlan } = useAuth()
+    const { user, userPlan, token } = useAuth()
+    const router = useRouter()
     const [billingPeriod, setBillingPeriod] = useState('monthly')
 
     const plans = [
@@ -125,15 +127,29 @@ export default function PricingPage() {
     ]
 
     const handleCheckout = async (priceId) => {
+        // Si es plan gratuito, redirigir a signup o dashboard
         if (!priceId) {
-            window.location.href = '/auth/register'
+            if (user) {
+                router.push('/dashboard')
+            } else {
+                router.push('/signup')
+            }
+            return
+        }
+
+        // Verificar autenticación antes de procesar el pago
+        if (!user || !token) {
+            router.push('/login')
             return
         }
 
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing/create-checkout-session`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({ priceId })
             })
 
@@ -168,8 +184,8 @@ export default function PricingPage() {
                         <button
                             onClick={() => setBillingPeriod('monthly')}
                             className={`px-6 py-2 rounded-md font-medium transition-all ${billingPeriod === 'monthly'
-                                    ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             Mensual
@@ -177,8 +193,8 @@ export default function PricingPage() {
                         <button
                             onClick={() => setBillingPeriod('yearly')}
                             className={`px-6 py-2 rounded-md font-medium transition-all relative ${billingPeriod === 'yearly'
-                                    ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
-                                    : 'text-slate-400 hover:text-white'
+                                ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
+                                : 'text-slate-400 hover:text-white'
                                 }`}
                         >
                             Anual
@@ -199,8 +215,8 @@ export default function PricingPage() {
                             <div
                                 key={plan.id}
                                 className={`relative bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col ${plan.highlighted
-                                        ? 'ring-2 ring-blue-500/50 border-blue-500/50'
-                                        : 'border-white/10 hover:border-white/20'
+                                    ? 'ring-2 ring-blue-500/50 border-blue-500/50'
+                                    : 'border-white/10 hover:border-white/20'
                                     } transition-all duration-300 hover:-translate-y-1`}
                             >
                                 {plan.badge && (
@@ -213,8 +229,8 @@ export default function PricingPage() {
 
                                 <div className="mb-4">
                                     <div className={`inline-flex p-3 rounded-lg ${plan.highlighted
-                                            ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20'
-                                            : 'bg-white/5'
+                                        ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20'
+                                        : 'bg-white/5'
                                         }`}>
                                         <Icon className={`w-6 h-6 ${plan.highlighted ? 'text-blue-400' : 'text-slate-400'}`} />
                                     </div>

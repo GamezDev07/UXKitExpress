@@ -33,8 +33,8 @@ export default function Header({ userPlan = null }) {
                                 key={link.href}
                                 href={link.href}
                                 className={`transition-colors ${isActive(link.href)
-                                        ? 'text-white font-semibold'
-                                        : 'text-slate-400 hover:text-white'
+                                    ? 'text-white font-semibold'
+                                    : 'text-slate-400 hover:text-white'
                                     }`}
                             >
                                 {link.label}
@@ -51,7 +51,7 @@ export default function Header({ userPlan = null }) {
                         {/* Auth Button */}
                         {!userPlan ? (
                             <Link
-                                href="/auth/login"
+                                href="/login"
                                 className="px-4 py-2 bg-gradient-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all"
                             >
                                 Iniciar Sesión
@@ -82,8 +82,8 @@ export default function Header({ userPlan = null }) {
                                     href={link.href}
                                     onClick={() => setMobileMenuOpen(false)}
                                     className={`transition-colors ${isActive(link.href)
-                                            ? 'text-white font-semibold'
-                                            : 'text-slate-400 hover:text-white'
+                                        ? 'text-white font-semibold'
+                                        : 'text-slate-400 hover:text-white'
                                         }`}
                                 >
                                     {link.label}
@@ -96,7 +96,7 @@ export default function Header({ userPlan = null }) {
                             )}
                             {!userPlan && (
                                 <Link
-                                    href="/auth/login"
+                                    href="/login"
                                     onClick={() => setMobileMenuOpen(false)}
                                     className="px-4 py-2 bg-gradient-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg text-center"
                                 >
