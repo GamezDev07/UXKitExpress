@@ -1,4 +1,6 @@
 import { AuthProvider } from './context/AuthContext'
+import './styles/tokens.css'
+import './styles/base.css'
 import './globals.css'
 import { Inter } from 'next/font/google'
 

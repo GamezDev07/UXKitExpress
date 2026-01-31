@@ -1,0 +1,126 @@
+/* ============================================
+   UX KIT BASE — USAGE EXAMPLES
+   ============================================ */
+
+/* ============================================
+   1. USING CSS VARIABLES
+   ============================================ */
+
+.custom-button {
+    background-color: var(--color-primary-600);
+    color: var(--color-text-inverse);
+    padding: var(--space-3) var(--space-6);
+    border-radius: var(--radius-md);
+    font-weight: var(--font-weight-semibold);
+    transition: background-color var(--transition-fast);
+}
+
+.custom-button:hover {
+    background-color: var(--color-primary-700);
+}
+
+/* ============================================
+   2. COMPONENTS
+   ============================================ */
+
+/* Alert */
+.alert {
+    padding: var(--space-4);
+    border-radius: var(--radius-md);
+    border-left: 4px solid;
+}
+
+.alert-success {
+    background-color: var(--color-success-light);
+    border-color: var(--color-success);
+    color: var(--color-success);
+}
+
+.alert-danger {
+    background-color: var(--color-danger-light);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+}
+
+/* Card */
+.card {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    margin-bottom: var(--space-4);
+}
+
+/* Badge */
+.badge {
+    display: inline-flex;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+.badge-primary {
+    background-color: var(--color-primary-100);
+    color: var(--color-primary-700);
+}
+
+/* ============================================
+   3. LAYOUT PATTERNS
+   ============================================ */
+
+.ux-container {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+}
+
+.ux-stack>*+* {
+    margin-top: var(--space-4);
+}
+
+/* ============================================
+   4. UTILITY STATES
+   ============================================ */
+
+.is-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.is-disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   JSX USAGE EXAMPLES
+   ============================================
+
+// Button with Tailwind + tokens
+<button className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-md">
+  Save Changes
+</button>
+
+// Card
+<div className="card">
+  <div className="card-header">Title</div>
+  <p>Content using the design system</p>
+</div>
+
+// Alert
+<div className="alert alert-success">
+  ✓ Operation completed successfully
+</div>
+
+// Badge
+<span className="badge badge-primary">New</span>
+
+============================================ */

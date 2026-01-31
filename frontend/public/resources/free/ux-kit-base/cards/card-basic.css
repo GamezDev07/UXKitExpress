@@ -1,0 +1,89 @@
+/* card-basic.css */
+
+/* Demo styles - Remove in production */
+.demo-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-6);
+    font-family: var(--font-sans);
+}
+
+.demo-section {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.demo-section .card {
+    flex: 1 1 300px;
+    max-width: 400px;
+}
+
+/* Card Component */
+.card {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: box-shadow var(--transition-base);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card__header {
+    padding: var(--space-4) var(--space-4) var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.card__title {
+    margin: 0;
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    color: var(--color-text-primary);
+    line-height: var(--line-height-normal);
+}
+
+.card__body {
+    padding: var(--space-4);
+}
+
+.card__text {
+    margin: 0;
+    color: var(--color-text-secondary);
+    line-height: var(--line-height-normal);
+    font-size: var(--font-size-base);
+}
+
+.card__footer {
+    padding: var(--space-3) var(--space-4) var(--space-4) var(--space-4);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+}
+
+.card__action {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background-color var(--transition-base);
+    min-height: 44px;
+    /* WCAG minimum tap target */
+}
+
+.card__action:hover {
+    background-color: var(--color-bg-secondary);
+}
+
+.card__action:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+}

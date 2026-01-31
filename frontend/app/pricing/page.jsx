@@ -139,7 +139,9 @@ export default function PricingPage() {
 
         // Verificar autenticación antes de procesar el pago
         if (!user || !token) {
-            router.push('/login')
+            // Redirigir a signup para que creen cuenta primero
+            // En la página de signup habrá link para ir a login si ya tienen cuenta
+            router.push('/signup')
             return
         }
 

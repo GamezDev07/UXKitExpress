@@ -1,0 +1,54 @@
+<!-- contact-form.html -->
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Form - UX Kit Express</title>
+    <link rel="stylesheet" href="../styles/variables.css">
+    <link rel="stylesheet" href="contact-form.css">
+</head>
+
+<body>
+    <div class="demo-container">
+        <h1>Formulario de Contacto</h1>
+
+        <form class="contact-form" novalidate>
+            <div class="form-group">
+                <label for="contact-name" class="form-label">
+                    Nombre completo
+                    <span class="form-required" aria-label="requerido">*</span>
+                </label>
+                <input type="text" id="contact-name" name="name" class="form-input" placeholder="Tu nombre" required
+                    aria-required="true">
+            </div>
+
+            <div class="form-group">
+                <label for="contact-email" class="form-label">
+                    Email
+                    <span class="form-required" aria-label="requerido">*</span>
+                </label>
+                <input type="email" id="contact-email" name="email" class="form-input" placeholder="tu@email.com"
+                    required aria-required="true">
+            </div>
+
+            <div class="form-group">
+                <label for="contact-message" class="form-label">
+                    Mensaje
+                    <span class="form-required" aria-label="requerido">*</span>
+                </label>
+                <textarea id="contact-message" name="message" class="form-textarea"
+                    placeholder="Escribe tu mensaje aquí..." rows="5" required aria-required="true"></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="form-button form-button--primary">Enviar mensaje</button>
+                <button type="reset" class="form-button form-button--secondary">Limpiar</button>
+            </div>
+        </form>
+    </div>
+</body>
+
+</html>
