@@ -12,6 +12,7 @@ export default function PricingPage() {
     const { user, userPlan, token } = useAuth()
     const router = useRouter()
     const [billingPeriod, setBillingPeriod] = useState('monthly')
+    const [loadingPlan, setLoadingPlan] = useState(null) // Track which plan is loading
 
     const plans = [
         {
@@ -125,7 +126,7 @@ export default function PricingPage() {
     ]
 
     const handleCheckout = async (planId) => {
-        // Si es plan gratuito, redirigir a signup o dashboard
+        // Plan gratuito: redirigir a signup o dashboard
         if (planId === 'free') {
             if (user) {
                 router.push('/dashboard')
@@ -135,33 +136,41 @@ export default function PricingPage() {
             return
         }
 
-        // Si no está logueado, redirigir guardando la intención de compra
-        if (!user || !token) {
-            router.push(`/signup?plan=${planId}&interval=${billingPeriod}`)
-            return
-        }
+        // PLANES DE PAGO: Llamar directamente al endpoint de Stripe checkout
+        setLoadingPlan(planId) // Activar loading para este plan
 
-        // Usuario logueado: proceder con el pago
         try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
-            const response = await fetch(`${API_URL}/api/billing/create-checkout-session`, {
+            console.log(`Creando sesión de pago para ${planId}...`)
+
+            const response = await fetch('https://uxkitexpress.onrender.com/api/billing/create-checkout', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     plan: planId,
-                    billingInterval: billingPeriod
+                    interval: billingPeriod
                 })
             })
 
-            const { url, error } = await response.json()
-            if (error) throw new Error(error)
-            if (url) window.location.href = url
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.message || 'Error al crear sesión de pago')
+            }
+
+            const { url } = await response.json()
+
+            // Redirigir a Stripe Checkout
+            if (url) {
+                window.location.href = url
+            } else {
+                throw new Error('No se recibió URL de checkout')
+            }
+
         } catch (error) {
-            console.error('Error al crear checkout:', error)
-            alert('Error al procesar el pago. Por favor intenta de nuevo.')
+            console.error('Error al procesar pago:', error)
+            alert('Hubo un error al procesar el pago. Por favor intenta de nuevo.')
+            setLoadingPlan(null) // Desactivar loading en caso de error
         }
     }
 
@@ -257,9 +266,10 @@ export default function PricingPage() {
                                 <Button
                                     variant={plan.highlighted ? 'primary' : 'secondary'}
                                     onClick={() => handleCheckout(plan.id)}
+                                    disabled={loadingPlan === plan.id}
                                     className="w-full mb-6"
                                 >
-                                    {plan.cta}
+                                    {loadingPlan === plan.id ? 'Procesando...' : plan.cta}
                                 </Button>
 
                                 <ul className="space-y-3 flex-1">
