@@ -22,29 +22,27 @@ const PORT = process.env.PORT || 3001;
 app.use(helmet());
 
 // CORS Configuration - Allow Vercel frontend and localhost
-const allowedOrigins = [
+const corsOrigins = [
   'https://ux-kit-express.vercel.app',
   'https://uxkitexpress.vercel.app',
-  'http://localhost:3000',
-  process.env.FRONTEND_URL
-].filter(Boolean);
+  'http://localhost:3000'
+];
+if (process.env.FRONTEND_URL) {
+  corsOrigins.push(process.env.FRONTEND_URL);
+}
 
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      logger.warn(`CORS blocked request from: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+const corsOptions = {
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS requests for all routes
+app.options('*', cors(corsOptions));
 
 // ⚠️ CRÍTICO: Webhook de Stripe ANTES de express.json()
 // Stripe necesita el raw body para verificar la firma
@@ -79,14 +77,16 @@ app.use('/api/contact', contactRoutes);
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 100,
-  message: { error: 'Demasiadas peticiones desde esta IP, intenta de nuevo en 15 minutos' }
+  message: { error: 'Demasiadas peticiones desde esta IP, intenta de nuevo en 15 minutos' },
+  skip: (req) => req.method === 'OPTIONS' // Skip rate limiting for CORS preflight
 });
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5, // Solo 5 intentos de login cada 15 minutos
   skipSuccessfulRequests: true,
-  message: { error: 'Demasiados intentos de inicio de sesión, intenta de nuevo en 15 minutos' }
+  message: { error: 'Demasiados intentos de inicio de sesión, intenta de nuevo en 15 minutos' },
+  skip: (req) => req.method === 'OPTIONS' // Skip rate limiting for CORS preflight
 });
 
 // Apply rate limiting to API routes
