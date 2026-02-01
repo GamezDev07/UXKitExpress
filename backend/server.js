@@ -21,28 +21,40 @@ const PORT = process.env.PORT || 3001;
 // Middlewares de seguridad
 app.use(helmet());
 
-// CORS Configuration - Allow Vercel frontend and localhost
-const corsOrigins = [
-  'https://ux-kit-express.vercel.app',
-  'https://uxkitexpress.vercel.app',
-  'http://localhost:3000'
-];
-if (process.env.FRONTEND_URL) {
-  corsOrigins.push(process.env.FRONTEND_URL);
-}
+// CORS Configuration - Dynamic origin validation for Vercel previews
+app.use(cors({
+  origin: (origin, callback) => {
+    const ACCEPTED_ORIGINS = [
+      process.env.FRONTEND_URL,
+      'http://localhost:3000',
+      'http://localhost:5173'
+    ];
 
-const corsOptions = {
-  origin: corsOrigins,
+    // Allow requests with no origin (Postman, curl, mobile apps)
+    if (!origin) return callback(null, true);
+
+    // Allow explicitly accepted origins
+    if (ACCEPTED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Allow all Vercel preview deployments
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+
+    // Block all other origins
+    logger.warn(`CORS blocked request from: ${origin}`);
+    return callback(new Error('No permitido por CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
+}));
 
 // Explicitly handle OPTIONS requests for all routes
-app.options('*', cors(corsOptions));
+app.options('*', cors());
 
 // ⚠️ CRÍTICO: Webhook de Stripe ANTES de express.json()
 // Stripe necesita el raw body para verificar la firma
