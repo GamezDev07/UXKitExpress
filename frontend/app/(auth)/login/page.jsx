@@ -2,10 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -50,7 +52,12 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password);
+
+      // Redirección manual ahora que AuthContext no redirige automáticamente
+      if (result?.success) {
+        router.push('/dashboard');
+      }
     } catch (error) {
       setErrors({
         submit: error.message || 'Error al iniciar sesión. Verifica tus credenciales.'

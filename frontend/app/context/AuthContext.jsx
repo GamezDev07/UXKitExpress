@@ -89,7 +89,8 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       setUserPlan(data.user.plan || 'free')
 
-      router.push('/dashboard')
+      // Navegación removida - ahora controlada por las páginas
+      // router.push('/dashboard')
 
       return { success: true, data }
     } catch (error) {
@@ -127,7 +128,8 @@ export function AuthProvider({ children }) {
       setUser(data.user)
       setUserPlan(data.user.plan || 'free')
 
-      router.push('/dashboard')
+      // Navegación removida - ahora controlada por las páginas
+      // router.push('/dashboard')
 
       return { success: true, data }
     } catch (error) {
