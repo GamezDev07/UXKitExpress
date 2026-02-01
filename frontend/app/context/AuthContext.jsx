@@ -1,166 +1,108 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { createClient } from '@supabase/supabase-js'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
+// Cliente Supabase Singleton
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 const AuthContext = createContext({})
 
 export const useAuth = () => {
   const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider')
   return context
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [userPlan, setUserPlan] = useState('free')
-  const [token, setToken] = useState(null)
+  const [token, setToken] = useState(null) // Nuevo estado para el Token
   const [loading, setLoading] = useState(true)
-  const router = useRouter()
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token')
-    if (storedToken) {
-      setToken(storedToken)
-      fetchUserProfile(storedToken)
-    } else {
+    // 1. Carga inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      handleSession(session)
       setLoading(false)
-    }
+    })
+
+    // 2. Escuchar cambios (Login, Logout, Token Refresh)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      handleSession(session)
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  const fetchUserProfile = async (authToken) => {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/profile`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      })
+  // Helper para centralizar la lógica de sesión
+  const handleSession = (session) => {
+    setUser(session?.user ?? null)
+    setToken(session?.access_token ?? null) // Guardar token
 
-      if (!response.ok) {
-        throw new Error('Failed to fetch profile')
-      }
-
-      const data = await response.json()
-      setUser({
-        id: data.user.id,
-        email: data.user.email,
-        fullName: data.user.full_name,
-        avatarUrl: data.user.avatar_url
-      })
-      setUserPlan(data.user.current_plan || 'free')
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
-      localStorage.removeItem('auth_token')
-      setToken(null)
-      setUser(null)
+    if (session?.user) {
+      fetchUserPlan(session.user.id)
+    } else {
       setUserPlan('free')
-    } finally {
-      setLoading(false)
     }
   }
 
-  const register = async (email, password, fullName) => {
+  const fetchUserPlan = async (userId) => {
     try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password, fullName })
-      })
+      const { data, error } = await supabase
+        .from('users')
+        .select('current_plan')
+        .eq('id', userId)
+        .single()
 
-      let data
-      try {
-        data = await response.json()
-      } catch (e) {
-        throw new Error('Error al procesar la respuesta del servidor')
+      if (!error && data) {
+        setUserPlan(data.current_plan)
       }
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Error al crear la cuenta')
-      }
-
-      localStorage.setItem('auth_token', data.token)
-      setToken(data.token)
-      setUser(data.user)
-      setUserPlan(data.user.plan || 'free')
-
-      // Navegación removida - ahora controlada por las páginas
-      // router.push('/dashboard')
-
-      return { success: true, data }
     } catch (error) {
-      console.error('Registration error:', error)
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error(`No se puede conectar con el servidor backend. URL: ${API_URL}`)
-      }
-      throw error
+      console.error('Error fetching plan:', error)
     }
   }
 
-  const login = async (email, password) => {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      })
-
-      let data
-      try {
-        data = await response.json()
-      } catch (e) {
-        throw new Error('Error al procesar la respuesta del servidor')
-      }
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || 'Error al iniciar sesión')
-      }
-
-      localStorage.setItem('auth_token', data.token)
-      setToken(data.token)
-      setUser(data.user)
-      setUserPlan(data.user.plan || 'free')
-
-      // Navegación removida - ahora controlada por las páginas
-      // router.push('/dashboard')
-
-      return { success: true, data }
-    } catch (error) {
-      console.error('Login error:', error)
-      if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error(`No se puede conectar con el servidor backend. URL: ${API_URL}`)
-      }
-      throw error
-    }
+  const signIn = async (email, password) => {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return data
   }
 
-  const logout = async () => {
-    localStorage.removeItem('auth_token')
-    setToken(null)
+  const signUp = async (email, password, fullName) => {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: fullName }
+      }
+    })
+    if (error) throw error
+    return data
+  }
+
+  const signOut = async () => {
+    await supabase.auth.signOut()
     setUser(null)
+    setToken(null)
     setUserPlan('free')
-
-    router.push('/')
   }
 
   const value = {
     user,
     userPlan,
-    token,
+    token, // Token expuesto para llamadas al Backend
     loading,
-    register,
-    login,
-    logout
+    signIn,
+    signUp,
+    signOut,
+    supabase
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export default AuthContext
+export { supabase }
