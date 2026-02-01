@@ -39,10 +39,11 @@ export default function SignupPage() {
     setErrors({});
 
     try {
-      // 1. Registro (CORREGIDO: No desestructuramos, recibimos el objeto directo)
+      // ✅ CORRECCIÓN: Capturamos el resultado directo (sin { data })
+      // AuthContext devuelve: { user, session, ... }
       const result = await signUp(formData.email, formData.password, formData.fullName);
 
-      // Validación ajustada: verificamos si obtuvimos sesión o usuario
+      // Validación robusta: verificamos si tenemos sesión o usuario en la raíz del objeto
       if (!result.session && !result.user) {
         throw new Error('No se pudo crear el usuario. Intenta de nuevo.');
       }
@@ -52,11 +53,10 @@ export default function SignupPage() {
       const interval = searchParams.get('interval');
 
       if (plan && plan !== 'free') {
-        // Obtenemos token fresco directamente de la sesión actual
+        // Obtenemos el token fresco
         const { data: { session } } = await supabase.auth.getSession();
 
         if (!session) {
-          // Si no hay sesión (ej: email confirm needed), mandamos a login
           router.push('/login?message=check_email');
           return;
         }
@@ -84,15 +84,14 @@ export default function SignupPage() {
       }
 
     } catch (error) {
-      console.error(error);
-      let msg = error.message;
+      console.error('Signup Error:', error);
+      let msg = error.message || 'Error desconocido';
 
-      // --- MANEJO DE ERRORES AMIGABLES ---
-      if (msg.includes('rate_limit') || msg.includes('Too Many Requests') || msg.includes('429')) {
-        msg = 'Demasiados intentos. Por seguridad, espera unos 60 segundos antes de intentar de nuevo.';
-      }
-      else if (msg.includes('already registered') || msg.includes('User already exists')) {
-        msg = 'Este correo ya está registrado. Por favor inicia sesión.';
+      // Traducción de errores comunes de Supabase
+      if (msg.includes('rate_limit') || msg.includes('429')) {
+        msg = 'Demasiados intentos. Por favor espera 30 segundos.';
+      } else if (msg.includes('already registered') || msg.includes('User already exists')) {
+        msg = 'Este correo ya está registrado. Inicia sesión.';
       }
 
       setErrors({ submit: msg });
