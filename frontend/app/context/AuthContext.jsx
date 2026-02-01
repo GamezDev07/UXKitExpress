@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
 
 const AuthContext = createContext({})
 
@@ -23,7 +23,6 @@ export function AuthProvider({ children }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Check for existing token on mount
     const storedToken = localStorage.getItem('auth_token')
     if (storedToken) {
       setToken(storedToken)
@@ -55,7 +54,6 @@ export function AuthProvider({ children }) {
       setUserPlan(data.user.current_plan || 'free')
     } catch (error) {
       console.error('Error fetching user profile:', error)
-      // Token might be invalid, clear it
       localStorage.removeItem('auth_token')
       setToken(null)
       setUser(null)
@@ -75,7 +73,6 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password, fullName })
       })
 
-      // Try to parse response
       let data
       try {
         data = await response.json()
@@ -87,21 +84,18 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || data.message || 'Error al crear la cuenta')
       }
 
-      // Save token and user data
       localStorage.setItem('auth_token', data.token)
       setToken(data.token)
       setUser(data.user)
       setUserPlan(data.user.plan || 'free')
 
-      // Redirect to dashboard
       router.push('/dashboard')
 
       return { success: true, data }
     } catch (error) {
       console.error('Registration error:', error)
-      // If it's a network error (connection refused, DNS fail, etc.)
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('No se puede conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3001')
+        throw new Error(`No se puede conectar con el servidor backend. URL: ${API_URL}`)
       }
       throw error
     }
@@ -117,7 +111,6 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password })
       })
 
-      // Try to parse response
       let data
       try {
         data = await response.json()
@@ -129,34 +122,29 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || data.message || 'Error al iniciar sesión')
       }
 
-      // Save token and user data
       localStorage.setItem('auth_token', data.token)
       setToken(data.token)
       setUser(data.user)
       setUserPlan(data.user.plan || 'free')
 
-      // Redirect to dashboard
       router.push('/dashboard')
 
       return { success: true, data }
     } catch (error) {
       console.error('Login error:', error)
-      // If it's a network error
       if (error instanceof TypeError && error.message === 'Failed to fetch') {
-        throw new Error('No se puede conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3001')
+        throw new Error(`No se puede conectar con el servidor backend. URL: ${API_URL}`)
       }
       throw error
     }
   }
 
   const logout = async () => {
-    // Clear local storage and state
     localStorage.removeItem('auth_token')
     setToken(null)
     setUser(null)
     setUserPlan('free')
 
-    // Redirect to home
     router.push('/')
   }
 
