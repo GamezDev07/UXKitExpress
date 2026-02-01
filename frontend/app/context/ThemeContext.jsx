@@ -14,25 +14,40 @@ export const useTheme = () => {
 
 export function ThemeProvider({ children }) {
     const [theme, setTheme] = useState('dark')
+    const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
-        // Check for saved theme preference or default to 'dark'
+        setMounted(true)
         const savedTheme = localStorage.getItem('theme') || 'dark'
         setTheme(savedTheme)
-        document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+
+        if (savedTheme === 'dark') {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
     }, [])
 
     const toggleTheme = () => {
         const newTheme = theme === 'dark' ? 'light' : 'dark'
         setTheme(newTheme)
         localStorage.setItem('theme', newTheme)
-        document.documentElement.classList.toggle('dark', newTheme === 'dark')
+
+        if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
     }
 
     const value = {
         theme,
         toggleTheme,
         isDark: theme === 'dark'
+    }
+
+    if (!mounted) {
+        return <>{children}</>
     }
 
     return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

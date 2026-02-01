@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Check, Sparkles, Zap, Users, Shield } from 'lucide-react'
+import Header from './components/Header'
 import Footer from './components/Footer'
 
 export default function Home() {
@@ -50,6 +51,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-light">
+      <Header />
+
       {/* Build Indicator - Remove after testing */}
       {process.env.NEXT_PUBLIC_BUILD_ID && (
         <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs px-3 py-2 rounded z-50">
