@@ -49,7 +49,12 @@ app.post('/api/billing/webhook',
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting
+// Connecting API routes FIRST (before rate limiters)
+app.use('/api/auth', authRoutes);
+app.use('/api/billing', billingRoutes);
+app.use('/api/contact', contactRoutes);
+
+// Rate limiting (applied AFTER routes are registered)
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 100,
@@ -63,7 +68,7 @@ const authLimiter = rateLimit({
   message: { error: 'Demasiados intentos de inicio de sesión, intenta de nuevo en 15 minutos' }
 });
 
-// Aplicar rate limiting
+// Apply rate limiting to API routes
 app.use('/api/', generalLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
@@ -102,12 +107,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Conectar rutas
-app.use('/api/auth', authRoutes);
-app.use('/api/billing', billingRoutes);
-app.use('/api/contact', contactRoutes);
-
-// Ruta 404
+// 404 handler - must come AFTER all routes
 app.use('*', (req, res) => {
   res.status(404).json({
     error: 'Ruta no encontrada',
