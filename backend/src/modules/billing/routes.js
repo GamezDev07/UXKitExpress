@@ -51,57 +51,119 @@ router.get('/', (req, res) => {
 
 // ===== NUEVO ENDPOINT: Checkout SIN autenticación =====
 // Para usuarios que seleccionan plan ANTES de registrarse
-router.post('/create-checkout', catchAsync(async (req, res) => {
-  const { plan, interval } = req.body;
+router.post('/create-checkout', async (req, res) => {
+  console.log('===================================');
+  console.log('CREATE CHECKOUT REQUEST RECEIVED');
+  console.log('Time:', new Date().toISOString());
+  console.log('Body:', JSON.stringify(req.body));
+  console.log('Headers:', JSON.stringify(req.headers));
+  console.log('===================================');
 
-  logger.info('Creating checkout session for:', { plan, interval });
+  try {
+    const { plan, interval } = req.body;
+    console.log('Plan:', plan);
+    console.log('Interval:', interval);
 
-  // Validar datos
-  if (!plan || !interval) {
-    return res.status(400).json({
-      error: 'Plan e interval son requeridos'
-    });
-  }
+    // Logging adicional con logger
+    logger.info('Creating checkout session for:', { plan, interval });
 
-  // Normalizar nombre del plan
-  const planKey = plan.toLowerCase();
-  const intervalKey = interval.toLowerCase();
-
-  // Obtener Price ID de Stripe
-  const priceId = PLAN_PRICES[planKey]?.[intervalKey];
-
-  if (!priceId) {
-    logger.error('Invalid plan:', `${planKey}-${intervalKey}`);
-    return res.status(400).json({
-      error: 'Plan no válido',
-      received: { plan, interval },
-      validPlans: Object.keys(PLAN_PRICES)
-    });
-  }
-
-  // Crear sesión de checkout
-  const session = await stripe.checkout.sessions.create({
-    mode: 'subscription',
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price: priceId,
-        quantity: 1,
-      },
-    ],
-    success_url: `${process.env.FRONTEND_URL}/signup?session_id={CHECKOUT_SESSION_ID}&plan=${plan}&interval=${interval}`,
-    cancel_url: `${process.env.FRONTEND_URL}/pricing?canceled=true`,
-    allow_promotion_codes: true,
-    metadata: {
-      plan,
-      interval
+    // Validar datos
+    if (!plan || !interval) {
+      console.error('Missing plan or interval');
+      logger.error('Validation failed: Missing plan or interval');
+      return res.status(400).json({
+        error: 'Plan e interval son requeridos'
+      });
     }
-  });
 
-  logger.info('Checkout session created:', session.id);
+    // Verificar que Stripe esté configurado
+    console.log('Checking Stripe configuration...');
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('STRIPE_SECRET_KEY not configured!');
+      logger.error('STRIPE_SECRET_KEY environment variable not set');
+      return res.status(500).json({
+        error: 'Stripe no configurado en el servidor'
+      });
+    }
+    console.log('STRIPE_SECRET_KEY exists:', !!process.env.STRIPE_SECRET_KEY);
+    console.log('STRIPE_SECRET_KEY prefix:', process.env.STRIPE_SECRET_KEY?.substring(0, 7));
 
-  res.json({ url: session.url });
-}));
+    // Normalizar nombre del plan
+    const planKey = plan.toLowerCase();
+    const intervalKey = interval.toLowerCase();
+    console.log('Normalized plan key:', planKey);
+    console.log('Normalized interval key:', intervalKey);
+
+    // Obtener Price ID de Stripe
+    const priceId = PLAN_PRICES[planKey]?.[intervalKey];
+    console.log('Looking for price ID with key:', `${planKey}.${intervalKey}`);
+    console.log('Price ID found:', priceId);
+
+    if (!priceId) {
+      console.error('Invalid plan/interval combination');
+      logger.error('Invalid plan:', `${planKey}-${intervalKey}`);
+      return res.status(400).json({
+        error: 'Plan no válido',
+        received: { plan, interval, planKey, intervalKey },
+        validPlans: Object.keys(PLAN_PRICES)
+      });
+    }
+
+    // Crear sesión de checkout
+    console.log('Creating Stripe checkout session...');
+    console.log('Session config:', {
+      mode: 'subscription',
+      priceId,
+      success_url: `${process.env.FRONTEND_URL}/signup?session_id={CHECKOUT_SESSION_ID}&plan=${plan}&interval=${interval}`,
+      cancel_url: `${process.env.FRONTEND_URL}/pricing?canceled=true`
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${process.env.FRONTEND_URL}/signup?session_id={CHECKOUT_SESSION_ID}&plan=${plan}&interval=${interval}`,
+      cancel_url: `${process.env.FRONTEND_URL}/pricing?canceled=true`,
+      allow_promotion_codes: true,
+      metadata: {
+        plan,
+        interval
+      }
+    });
+
+    console.log('Session created successfully!');
+    console.log('Session ID:', session.id);
+    console.log('Session URL:', session.url);
+    console.log('===================================');
+
+    logger.info('Checkout session created:', session.id);
+
+    res.json({ url: session.url });
+
+  } catch (error) {
+    console.error('===================================');
+    console.error('CHECKOUT ERROR OCCURRED');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error type:', error.type);
+    console.error('Error code:', error.code);
+    console.error('Error stack:', error.stack);
+    console.error('===================================');
+
+    logger.error('Error creating checkout session:', error);
+
+    res.status(500).json({
+      error: 'Error al crear sesión de pago',
+      message: error.message,
+      type: error.type
+    });
+  }
+});
 
 // Crear sesión de checkout
 router.post('/create-checkout-session', authenticate, catchAsync(async (req, res) => {
