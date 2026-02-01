@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Sparkles, Zap, Rocket, Building2 } from 'lucide-react'
 import Header from '../components/Header'
-import Footer from '../components/Footer'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 
@@ -12,7 +11,6 @@ export default function PricingPage() {
     const { user, userPlan, token } = useAuth()
     const router = useRouter()
     const [billingPeriod, setBillingPeriod] = useState('monthly')
-    const [loadingPlan, setLoadingPlan] = useState(null) // Track which plan is loading
 
     const plans = [
         {
@@ -23,13 +21,7 @@ export default function PricingPage() {
             yearlyPrice: 0,
             currency: 'USD',
             icon: Sparkles,
-            features: [
-                '10 componentes básicos (actualizables mensualmente)',
-                '3 plantillas Figma/XD (rotación mensual)',
-                'Generador de código básico (HTML/CSS)',
-                'Comunidad Discord + Foro',
-                '1 proyecto colaborativo (hasta 2 miembros)'
-            ],
+            features: ['Acceso a componentes básicos', '5 descargas por mes', 'Soporte comunitario', 'Actualizaciones limitadas'],
             cta: 'Comenzar Gratis',
             highlighted: false,
             stripePriceIdMonthly: null,
@@ -43,15 +35,7 @@ export default function PricingPage() {
             yearlyPrice: 150,
             currency: 'USD',
             icon: Zap,
-            features: [
-                'Todo Free +',
-                '300+ componentes (acceso completo)',
-                '50 plantillas premium',
-                'Generador React/Tailwind',
-                'Sistema de versionado',
-                'Exportar a 5 formatos (Figma, XD, Sketch, React, Vue)',
-                '3 proyectos colaborativos (hasta 5 miembros)'
-            ],
+            features: ['Todo lo de Free', 'Descargas ilimitadas', '100+ componentes premium', 'Iconos y assets básicos', 'Soporte por email'],
             cta: 'Comenzar con Basic',
             highlighted: false,
             stripePriceIdMonthly: 'price_basic_monthly',
@@ -65,15 +49,7 @@ export default function PricingPage() {
             yearlyPrice: 390,
             currency: 'USD',
             icon: Rocket,
-            features: [
-                'Todo Basic +',
-                'Componentes personalizables (theme builder)',
-                'Plugin Figma/XD propio',
-                'Generador de documentación automática',
-                'Analytics de uso',
-                '10 proyectos colaborativos (hasta 10 miembros)',
-                'Soporte prioritario'
-            ],
+            features: ['Todo lo de Basic', '500+ componentes premium', 'Templates completos', 'Soporte prioritario'],
             cta: 'Comenzar con Advance',
             highlighted: true,
             badge: 'Recomendado',
@@ -88,15 +64,7 @@ export default function PricingPage() {
             yearlyPrice: 890,
             currency: 'USD',
             icon: Building2,
-            features: [
-                'Todo Advance +',
-                'White-label (marca propia)',
-                'API de componentes',
-                'SSO empresarial',
-                'Componentes ilimitados personalizados',
-                'Onboarding personalizado',
-                'Proyectos ilimitados (miembros ilimitados)'
-            ],
+            features: ['Todo lo de Advance', '1000+ componentes premium', 'Kit completo de diseño', 'Soporte dedicado 24/7'],
             cta: 'Comenzar con Pro',
             highlighted: false,
             stripePriceIdMonthly: 'price_pro_monthly',
@@ -110,14 +78,7 @@ export default function PricingPage() {
             yearlyPrice: 2990,
             currency: 'USD',
             icon: Building2,
-            features: [
-                'Todo Pro +',
-                'SLA 99.9%',
-                'Dedicado manager de cuenta',
-                'Custom development',
-                'Migración desde otros sistemas',
-                'Formación para equipos'
-            ],
+            features: ['Todo lo de Pro', 'Recursos ilimitados', 'Licencias ilimitadas', 'Manager de cuenta dedicado'],
             cta: 'Contactar Ventas',
             highlighted: false,
             stripePriceIdMonthly: 'price_enterprise_monthly',
@@ -126,167 +87,77 @@ export default function PricingPage() {
     ]
 
     const handleCheckout = async (planId) => {
-        // Plan gratuito: redirigir a signup o dashboard
+        // Caso 1: Plan Gratuito
         if (planId === 'free') {
-            if (user) {
-                router.push('/dashboard')
-            } else {
-                router.push('/signup')
-            }
+            if (user) router.push('/dashboard')
+            else router.push('/signup')
             return
         }
 
-        // PLANES DE PAGO: Llamar directamente al endpoint de Stripe checkout
-        setLoadingPlan(planId) // Activar loading para este plan
+        // Caso 2: Usuario NO logueado (Guardar intención y redirigir)
+        if (!user || !token) {
+            router.push(`/signup?plan=${planId}&interval=${billingPeriod}`)
+            return
+        }
 
+        // Caso 3: Usuario Logueado (Procesar pago directo)
         try {
-            console.log(`Creando sesión de pago para ${planId}...`)
-
-            const response = await fetch('https://uxkitexpress.onrender.com/api/billing/create-checkout', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing/create-checkout-session`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify({
                     plan: planId,
-                    interval: billingPeriod
+                    billingInterval: billingPeriod
                 })
             })
 
-            if (!response.ok) {
-                const error = await response.json()
-                throw new Error(error.message || 'Error al crear sesión de pago')
-            }
-
-            const { url } = await response.json()
-
-            // Redirigir a Stripe Checkout
-            if (url) {
-                window.location.href = url
-            } else {
-                throw new Error('No se recibió URL de checkout')
-            }
-
+            const { url, error } = await response.json()
+            if (error) throw new Error(error)
+            if (url) window.location.href = url
         } catch (error) {
-            console.error('Error al procesar pago:', error)
-            alert('Hubo un error al procesar el pago. Por favor intenta de nuevo.')
-            setLoadingPlan(null) // Desactivar loading en caso de error
+            console.error('Error al crear checkout:', error)
+            alert('Error al procesar el pago. Por favor intenta de nuevo.')
         }
     }
 
     const getPrice = (plan) => billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
-    const getPriceId = (plan) => billingPeriod === 'monthly' ? plan.stripePriceIdMonthly : plan.stripePriceIdYearly
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-200">
             <Header userPlan={userPlan} />
-
-            {/* Hero Section */}
             <section className="py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-                        Planes que crecen contigo
-                    </h1>
-                    <p className="text-xl text-slate-400 mb-12">
-                        Elige el plan perfecto para tus necesidades. Actualiza o cancela en cualquier momento.
-                    </p>
+                    <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">Planes que crecen contigo</h1>
+                    <p className="text-xl text-slate-400 mb-12">Elige el plan perfecto para tus necesidades.</p>
 
-                    {/* Billing Toggle */}
                     <div className="inline-flex items-center gap-4 p-1 bg-slate-900/50 border border-white/10 rounded-lg backdrop-blur">
-                        <button
-                            onClick={() => setBillingPeriod('monthly')}
-                            className={`px-6 py-2 rounded-md font-medium transition-all ${billingPeriod === 'monthly'
-                                ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
-                                : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Mensual
-                        </button>
-                        <button
-                            onClick={() => setBillingPeriod('yearly')}
-                            className={`px-6 py-2 rounded-md font-medium transition-all relative ${billingPeriod === 'yearly'
-                                ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
-                                : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Anual
-                            <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-white px-2 py-1 rounded">
-                                Ahorra 17%
-                            </span>
-                        </button>
+                        <button onClick={() => setBillingPeriod('monthly')} className={`px-6 py-2 rounded-md font-medium transition-all ${billingPeriod === 'monthly' ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white' : 'text-slate-400 hover:text-white'}`}>Mensual</button>
+                        <button onClick={() => setBillingPeriod('yearly')} className={`px-6 py-2 rounded-md font-medium transition-all relative ${billingPeriod === 'yearly' ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white' : 'text-slate-400 hover:text-white'}`}>Anual <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-white px-2 py-1 rounded">Ahorra 17%</span></button>
                     </div>
                 </div>
             </section>
 
-            {/* Pricing Cards */}
             <section className="pb-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                     {plans.map((plan) => {
                         const Icon = plan.icon
                         return (
-                            <div
-                                key={plan.id}
-                                className={`relative bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col ${plan.highlighted
-                                    ? 'ring-2 ring-blue-500/50 border-blue-500/50'
-                                    : 'border-white/10 hover:border-white/20'
-                                    } transition-all duration-300 hover:-translate-y-1`}
-                            >
-                                {plan.badge && (
-                                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                                        <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold rounded-full">
-                                            {plan.badge}
-                                        </span>
-                                    </div>
-                                )}
-
-                                <div className="mb-4">
-                                    <div className={`inline-flex p-3 rounded-lg ${plan.highlighted
-                                        ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20'
-                                        : 'bg-white/5'
-                                        }`}>
-                                        <Icon className={`w-6 h-6 ${plan.highlighted ? 'text-blue-400' : 'text-slate-400'}`} />
-                                    </div>
-                                </div>
-
+                            <div key={plan.id} className={`relative bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col ${plan.highlighted ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 'border-white/10 hover:border-white/20'} transition-all duration-300 hover:-translate-y-1`}>
+                                {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2"><span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold rounded-full">{plan.badge}</span></div>}
+                                <div className="mb-4"><div className={`inline-flex p-3 rounded-lg ${plan.highlighted ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20' : 'bg-white/5'}`}><Icon className={`w-6 h-6 ${plan.highlighted ? 'text-blue-400' : 'text-slate-400'}`} /></div></div>
                                 <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
                                 <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
-
-                                <div className="mb-6">
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-4xl font-bold text-white">
-                                            ${getPrice(plan)}
-                                        </span>
-                                        <span className="text-slate-400">{plan.currency}</span>
-                                    </div>
-                                    <p className="text-slate-500 text-sm mt-1">
-                                        por {billingPeriod === 'monthly' ? 'mes' : 'año'}
-                                    </p>
-                                </div>
-
-                                <Button
-                                    variant={plan.highlighted ? 'primary' : 'secondary'}
-                                    onClick={() => handleCheckout(plan.id)}
-                                    disabled={loadingPlan === plan.id}
-                                    className="w-full mb-6"
-                                >
-                                    {loadingPlan === plan.id ? 'Procesando...' : plan.cta}
-                                </Button>
-
-                                <ul className="space-y-3 flex-1">
-                                    {plan.features.map((feature, idx) => (
-                                        <li key={idx} className="flex items-start gap-3">
-                                            <Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
-                                            <span className="text-sm text-slate-300">{feature}</span>
-                                        </li>
-                                    ))}
-                                </ul>
+                                <div className="mb-6"><div className="flex items-baseline gap-2"><span className="text-4xl font-bold text-white">${getPrice(plan)}</span><span className="text-slate-400">{plan.currency}</span></div><p className="text-slate-500 text-sm mt-1">por {billingPeriod === 'monthly' ? 'mes' : 'año'}</p></div>
+                                <Button variant={plan.highlighted ? 'primary' : 'secondary'} onClick={() => handleCheckout(plan.id)} className="w-full mb-6">{plan.cta}</Button>
+                                <ul className="space-y-3 flex-1">{plan.features.map((feature, idx) => (<li key={idx} className="flex items-start gap-3"><Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" /><span className="text-sm text-slate-300">{feature}</span></li>))}</ul>
                             </div>
                         )
                     })}
                 </div>
             </section>
-
-            <Footer />
         </div>
     )
 }

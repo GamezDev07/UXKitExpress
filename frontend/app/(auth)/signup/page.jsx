@@ -1,303 +1,255 @@
-'use client';
+'use client'
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuth } from '@/app/context/AuthContext';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
+import { AlertCircle, Loader2, Eye, EyeOff, Lock, Mail, User, Zap } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import Button from '../../components/Button'
 
 export default function SignupPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const { register, loading } = useAuth()
+
   const [formData, setFormData] = useState({
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
-  });
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const { register } = useAuth();
+  })
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-    // Limpiar error del campo al escribir
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: ''
-      });
-    }
-  };
+  const [errors, setErrors] = useState({})
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Leer parámetros de plan de la URL
+  const selectedPlan = searchParams.get('plan')
+  const selectedInterval = searchParams.get('interval')
 
   const validateForm = () => {
-    const newErrors = {};
+    const newErrors = {}
 
-    if (formData.fullName.length < 2) {
-      newErrors.fullName = 'El nombre debe tener al menos 2 caracteres';
+    if (!formData.name.trim()) {
+      newErrors.name = 'El nombre es requerido'
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Email inválido';
+    if (!formData.email.trim()) {
+      newErrors.email = 'El email es requerido'
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Email inválido'
     }
 
-    if (formData.password.length < 8) {
-      newErrors.password = 'La contraseña debe tener al menos 8 caracteres';
+    if (!formData.password) {
+      newErrors.password = 'La contraseña es requerida'
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'La contraseña debe tener al menos 6 caracteres'
     }
 
     if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Las contraseñas no coinciden';
+      newErrors.confirmPassword = 'Las contraseñas no coinciden'
     }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return
 
-    setLoading(true);
-    setErrors({}); // Clear previous errors
+    setIsSubmitting(true)
 
     try {
-      // 1. Registro (El AuthContext YA NO redirige automáticamente)
-      const result = await register(formData.email, formData.password, formData.fullName);
+      console.log('Submitting registration...')
+      const result = await register(formData.name, formData.email, formData.password)
 
       if (result?.success) {
-        // 2. Verificar intención de compra en los query params
-        const plan = searchParams.get('plan');
-        const interval = searchParams.get('interval');
+        console.log('Registration successful!')
 
-        if (plan && plan !== 'free') {
-          // --- FLUJO DE PAGO (Stripe) ---
-          // El token ya está disponible en result.data.token
-          try {
-            const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
-            const response = await fetch(`${API_URL}/api/billing/create-checkout-session`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${result.data.token}`
-              },
-              body: JSON.stringify({
-                plan: plan,
-                billingInterval: interval || 'monthly'
-              })
-            });
+        // FLUJO LINEAL: Siempre ir al dashboard después del registro
+        // NO importa si hay plan en la URL, el usuario primero debe completar su perfil
+        console.log('Redirecting to dashboard...')
+        router.push('/dashboard')
 
-            const { url, error } = await response.json();
-            if (error) throw new Error(error);
-            if (url) {
-              window.location.href = url; // Redirige a Stripe
-              return; // Importante: evitar la redirección a dashboard
-            }
-          } catch (checkoutError) {
-            console.error('Error al iniciar checkout:', checkoutError);
-            // Si falla el checkout, redirigir al dashboard como fallback
-            router.push('/dashboard');
-          }
-        } else {
-          // --- FLUJO GRATUITO O SIN PLAN ---
-          // Redirección manual necesaria ahora que AuthContext no redirige
-          router.push('/dashboard');
-        }
+        // NOTA: El pago se manejará DESDE el dashboard
+        // El usuario verá su plan actual (free) y podrá upgradear desde ahí
       }
     } catch (error) {
-      // Display error to user
+      console.error('Registration error:', error)
       setErrors({
-        submit: error.message || 'Error al crear la cuenta. Por favor intenta de nuevo.'
-      });
+        submit: error.response?.data?.error || error.message || 'Error al crear la cuenta'
+      })
     } finally {
-      setLoading(false);
+      setIsSubmitting(false)
     }
-  };
+  }
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
-        {/* Logo/Header */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-block">
-            <h1 className="text-3xl font-bold text-primary-600 mb-2">
-              UX-Kit Express
-            </h1>
-          </Link>
-          <p className="text-gray-600">
-            Crea tu cuenta y comienza gratis
+          <div className="inline-flex items-center gap-2 mb-4">
+            <div className="bg-gradient-to-r from-blue-500 to-violet-500 p-3 rounded-xl">
+              <Zap className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-white">UX-Kit Express</span>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-2">Crear Cuenta</h1>
+          <p className="text-slate-400">
+            {selectedPlan && selectedPlan !== 'free'
+              ? `Regístrate para continuar con el plan ${selectedPlan}`
+              : 'Únete a nuestra comunidad de diseñadores'}
           </p>
         </div>
 
-        {/* Formulario */}
-        <div className="card">
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Nombre completo */}
-            <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                Nombre completo
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  value={formData.fullName}
-                  onChange={handleChange}
-                  className={`input-field pl-10 ${errors.fullName ? 'border-red-500' : ''}`}
-                  placeholder="Juan Pérez"
-                  required
-                />
-              </div>
-              {errors.fullName && (
-                <p className="mt-1 text-sm text-red-600">{errors.fullName}</p>
-              )}
-            </div>
-
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`input-field pl-10 ${errors.email ? 'border-red-500' : ''}`}
-                  placeholder="tu@email.com"
-                  required
-                />
-              </div>
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-              )}
-            </div>
-
-            {/* Contraseña */}
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`input-field pl-10 ${errors.password ? 'border-red-500' : ''}`}
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                />
-              </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-              )}
-              <p className="mt-1 text-xs text-gray-500">
-                Debe incluir mayúsculas, minúsculas, números y caracteres especiales
+        <div className="bg-slate-900/50 backdrop-blur border border-white/10 rounded-2xl p-8">
+          {selectedPlan && selectedPlan !== 'free' && (
+            <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-sm text-blue-400 flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                Plan seleccionado: <span className="font-semibold capitalize">{selectedPlan}</span> ({selectedInterval})
+              </p>
+              <p className="text-xs text-slate-400 mt-1">
+                Después de crear tu cuenta, podrás completar el pago desde tu dashboard
               </p>
             </div>
+          )}
 
-            {/* Confirmar contraseña */}
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar contraseña
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={`input-field pl-10 ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                  placeholder="Confirma tu contraseña"
-                  required
-                />
-              </div>
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-              )}
-            </div>
-
-            {/* Términos */}
-            <div className="flex items-start">
-              <input
-                id="terms"
-                type="checkbox"
-                className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 mt-1"
-                required
-              />
-              <label htmlFor="terms" className="ml-2 text-sm text-gray-600">
-                Acepto los{' '}
-                <Link href="/terms" className="text-primary-600 hover:underline">
-                  Términos de Servicio
-                </Link>{' '}
-                y la{' '}
-                <Link href="/privacy" className="text-primary-600 hover:underline">
-                  Política de Privacidad
-                </Link>
-              </label>
-            </div>
-
-            {/* Error general */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {errors.submit && (
-              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-sm text-red-600">{errors.submit}</p>
+              <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-400">{errors.submit}</p>
               </div>
             )}
 
-            {/* Botón submit */}
-            <button
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Nombre completo</label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="John Doe"
+                />
+              </div>
+              {errors.name && <p className="mt-1 text-sm text-red-400">{errors.name}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="john@example.com"
+                />
+              </div>
+              {errors.email && <p className="mt-1 text-sm text-red-400">{errors.email}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Contraseña</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.password && <p className="mt-1 text-sm text-red-400">{errors.password}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">Confirmar contraseña</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-12 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
+                >
+                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="mt-1 text-sm text-red-400">{errors.confirmPassword}</p>}
+            </div>
+
+            <Button
               type="submit"
-              disabled={loading}
-              className="btn-primary w-full"
+              variant="primary"
+              disabled={isSubmitting || loading}
+              className="w-full"
             >
-              {loading ? (
-                <>
-                  <div className="spinner border-white border-t-transparent w-5 h-5" />
+              {isSubmitting || loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-5 h-5 animate-spin" />
                   Creando cuenta...
-                </>
+                </span>
               ) : (
-                <>
-                  Crear cuenta gratis
-                  <ArrowRight className="w-5 h-5" />
-                </>
+                'Crear cuenta'
               )}
-            </button>
+            </Button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">o</span>
-            </div>
+          <div className="mt-6 text-center">
+            <p className="text-slate-400 text-sm">
+              ¿Ya tienes una cuenta?{' '}
+              <Link href="/login" className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
+                Inicia sesión
+              </Link>
+            </p>
           </div>
-
-          {/* Iniciar sesión */}
-          <p className="text-center text-gray-600">
-            ¿Ya tienes una cuenta?{' '}
-            <Link href="/login" className="text-primary-600 font-semibold hover:text-primary-700">
-              Inicia sesión
-            </Link>
-          </p>
         </div>
+
+        <p className="text-center text-slate-500 text-sm mt-6">
+          Al crear una cuenta, aceptas nuestros{' '}
+          <Link href="/terms" className="text-slate-400 hover:text-white transition-colors">
+            Términos de Servicio
+          </Link>{' '}
+          y{' '}
+          <Link href="/privacy" className="text-slate-400 hover:text-white transition-colors">
+            Política de Privacidad
+          </Link>
+        </p>
       </div>
     </div>
-  );
+  )
 }
