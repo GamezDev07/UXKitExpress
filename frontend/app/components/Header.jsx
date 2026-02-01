@@ -2,12 +2,14 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, User } from 'lucide-react'
+import { Menu, X, User, LogOut } from 'lucide-react'
 import { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Header({ userPlan = null }) {
     const pathname = usePathname()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const { user, logout } = useAuth()
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
@@ -57,9 +59,18 @@ export default function Header({ userPlan = null }) {
                                 Iniciar Sesión
                             </Link>
                         ) : (
-                            <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all">
-                                <User className="w-5 h-5 text-white" />
-                            </button>
+                            <div className="flex items-center gap-3">
+                                <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all">
+                                    <User className="w-5 h-5 text-white" />
+                                </button>
+                                <button
+                                    onClick={logout}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span className="text-sm">Salir</span>
+                                </button>
+                            </div>
                         )}
                     </nav>
 
@@ -94,7 +105,7 @@ export default function Header({ userPlan = null }) {
                                     Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                                 </div>
                             )}
-                            {!userPlan && (
+                            {!userPlan ? (
                                 <Link
                                     href="/login"
                                     onClick={() => setMobileMenuOpen(false)}
@@ -102,6 +113,17 @@ export default function Header({ userPlan = null }) {
                                 >
                                     Iniciar Sesión
                                 </Link>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        logout();
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
+                                >
+                                    <LogOut className="w-4 h-4" />
+                                    <span>Cerrar Sesión</span>
+                                </button>
                             )}
                         </nav>
                     </div>

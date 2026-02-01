@@ -1,12 +1,9 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 const AuthContext = createContext({})
 
@@ -21,88 +18,139 @@ export const useAuth = () => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [userPlan, setUserPlan] = useState('free')
+  const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
   useEffect(() => {
-    // Obtener sesión actual
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchUserPlan(session.user.id)
-      }
+    // Check for existing token on mount
+    const storedToken = localStorage.getItem('auth_token')
+    if (storedToken) {
+      setToken(storedToken)
+      fetchUserProfile(storedToken)
+    } else {
       setLoading(false)
-    })
-
-    // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchUserPlan(session.user.id)
-      } else {
-        setUserPlan('free')
-      }
-    })
-
-    return () => subscription.unsubscribe()
+    }
   }, [])
 
-  const fetchUserPlan = async (userId) => {
+  const fetchUserProfile = async (authToken) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('current_plan')
-        .eq('id', userId)
-        .single()
+      const response = await fetch(`${API_URL}/api/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      })
 
-      if (error) throw error
-      setUserPlan(data?.current_plan || 'free')
+      if (!response.ok) {
+        throw new Error('Failed to fetch profile')
+      }
+
+      const data = await response.json()
+      setUser({
+        id: data.user.id,
+        email: data.user.email,
+        fullName: data.user.full_name,
+        avatarUrl: data.user.avatar_url
+      })
+      setUserPlan(data.user.current_plan || 'free')
     } catch (error) {
-      console.error('Error fetching user plan:', error)
+      console.error('Error fetching user profile:', error)
+      // Token might be invalid, clear it
+      localStorage.removeItem('auth_token')
+      setToken(null)
+      setUser(null)
       setUserPlan('free')
+    } finally {
+      setLoading(false)
     }
   }
 
-  const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    })
-    if (error) throw error
-    return data
-  }
+  const register = async (email, password, fullName) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password, fullName })
+      })
 
-  const signUp = async (email, password, fullName) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: fullName
-        }
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al crear la cuenta')
       }
-    })
-    if (error) throw error
-    return data
+
+      // Save token and user data
+      localStorage.setItem('auth_token', data.token)
+      setToken(data.token)
+      setUser(data.user)
+      setUserPlan(data.user.plan || 'free')
+
+      // Redirect to dashboard
+      router.push('/dashboard')
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Registration error:', error)
+      throw error
+    }
   }
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) throw error
+  const login = async (email, password) => {
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al iniciar sesión')
+      }
+
+      // Save token and user data
+      localStorage.setItem('auth_token', data.token)
+      setToken(data.token)
+      setUser(data.user)
+      setUserPlan(data.user.plan || 'free')
+
+      // Redirect to dashboard
+      router.push('/dashboard')
+
+      return { success: true, data }
+    } catch (error) {
+      console.error('Login error:', error)
+      throw error
+    }
+  }
+
+  const logout = async () => {
+    // Clear local storage and state
+    localStorage.removeItem('auth_token')
+    setToken(null)
     setUser(null)
     setUserPlan('free')
+
+    // Redirect to home
+    router.push('/')
   }
 
   const value = {
     user,
     userPlan,
+    token,
     loading,
-    signIn,
-    signUp,
-    signOut,
-    supabase
+    register,
+    login,
+    logout
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-export { supabase }
+export default AuthContext

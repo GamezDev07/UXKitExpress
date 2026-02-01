@@ -55,14 +55,25 @@ export default function SignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     setLoading(true);
-    await register(formData.email, formData.password, formData.fullName);
-    setLoading(false);
+    setErrors({}); // Clear previous errors
+
+    try {
+      await register(formData.email, formData.password, formData.fullName);
+      // Success - register function handles redirect to dashboard
+    } catch (error) {
+      // Display error to user
+      setErrors({
+        submit: error.message || 'Error al crear la cuenta. Por favor intenta de nuevo.'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -197,6 +208,13 @@ export default function SignupPage() {
                 </Link>
               </label>
             </div>
+
+            {/* Error general */}
+            {errors.submit && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-600">{errors.submit}</p>
+              </div>
+            )}
 
             {/* Botón submit */}
             <button
