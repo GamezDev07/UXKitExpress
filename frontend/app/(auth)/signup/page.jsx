@@ -39,11 +39,11 @@ export default function SignupPage() {
     setErrors({});
 
     try {
-      // 1. Registro usando la función correcta 'signUp'
-      const { data, error } = await signUp(formData.email, formData.password, formData.fullName);
+      // 1. Registro (CORREGIDO: No desestructuramos, recibimos el objeto directo)
+      const result = await signUp(formData.email, formData.password, formData.fullName);
 
-      // Manejo de caso donde Supabase no devuelve error pero tampoco sesión (ej: confirmación de email requerida)
-      if (!data.session && !data.user) {
+      // Validación ajustada: verificamos si obtuvimos sesión o usuario
+      if (!result.session && !result.user) {
         throw new Error('No se pudo crear el usuario. Intenta de nuevo.');
       }
 
@@ -85,11 +85,16 @@ export default function SignupPage() {
 
     } catch (error) {
       console.error(error);
-      // Mensaje amigable para usuario duplicado
       let msg = error.message;
-      if (msg.includes('already registered') || msg.includes('User already exists')) {
+
+      // --- MANEJO DE ERRORES AMIGABLES ---
+      if (msg.includes('rate_limit') || msg.includes('Too Many Requests') || msg.includes('429')) {
+        msg = 'Demasiados intentos. Por seguridad, espera unos 60 segundos antes de intentar de nuevo.';
+      }
+      else if (msg.includes('already registered') || msg.includes('User already exists')) {
         msg = 'Este correo ya está registrado. Por favor inicia sesión.';
       }
+
       setErrors({ submit: msg });
     } finally {
       setLoading(false);
