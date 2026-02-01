@@ -32,6 +32,23 @@ const PLAN_PRICES = {
   }
 };
 
+// Test endpoint - verificar que las rutas están registradas
+router.get('/', (req, res) => {
+  logger.info('Billing routes test endpoint called');
+  res.json({
+    status: 'Billing API active',
+    message: 'Billing routes are properly registered',
+    endpoints: {
+      'POST /create-checkout': 'Create Stripe checkout session (no auth)',
+      'POST /create-checkout-session': 'Create checkout session (auth required)',
+      'POST /webhook': 'Stripe webhook handler',
+      'GET /subscription': 'Get subscription details',
+      'POST /cancel-subscription': 'Cancel subscription',
+      'POST /create-portal-session': 'Create billing portal session'
+    }
+  });
+});
+
 // ===== NUEVO ENDPOINT: Checkout SIN autenticación =====
 // Para usuarios que seleccionan plan ANTES de registrarse
 router.post('/create-checkout', catchAsync(async (req, res) => {
