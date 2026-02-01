@@ -2,14 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, User, LogOut } from 'lucide-react'
+import { Menu, X, User, LogOut, Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function Header({ userPlan = null }) {
     const pathname = usePathname()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
     const { user, logout } = useAuth()
+    const { isDark, toggleTheme } = useTheme()
 
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
@@ -49,6 +51,19 @@ export default function Header({ userPlan = null }) {
                                 Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                             </div>
                         )}
+
+                        {/* Theme Toggle */}
+                        <button
+                            onClick={toggleTheme}
+                            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"
+                            aria-label="Toggle theme"
+                        >
+                            {isDark ? (
+                                <Sun className="w-5 h-5 text-white" />
+                            ) : (
+                                <Moon className="w-5 h-5 text-white" />
+                            )}
+                        </button>
 
                         {/* Auth Button */}
                         {!userPlan ? (
@@ -105,6 +120,28 @@ export default function Header({ userPlan = null }) {
                                     Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                                 </div>
                             )}
+
+                            {/* Theme Toggle Mobile */}
+                            <button
+                                onClick={() => {
+                                    toggleTheme();
+                                    setMobileMenuOpen(false);
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
+                            >
+                                {isDark ? (
+                                    <>
+                                        <Sun className="w-4 h-4" />
+                                        <span>Modo Claro</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Moon className="w-4 h-4" />
+                                        <span>Modo Oscuro</span>
+                                    </>
+                                )}
+                            </button>
+
                             {!userPlan ? (
                                 <Link
                                     href="/login"

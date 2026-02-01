@@ -1,4 +1,5 @@
 import { AuthProvider } from './context/AuthContext'
+import { ThemeProvider } from './context/ThemeContext'
 import './styles/tokens.css'
 import './styles/base.css'
 import './globals.css'
@@ -15,9 +16,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body className={inter.className}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

@@ -75,10 +75,16 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password, fullName })
       })
 
-      const data = await response.json()
+      // Try to parse response
+      let data
+      try {
+        data = await response.json()
+      } catch (e) {
+        throw new Error('Error al procesar la respuesta del servidor')
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al crear la cuenta')
+        throw new Error(data.error || data.message || 'Error al crear la cuenta')
       }
 
       // Save token and user data
@@ -93,6 +99,10 @@ export function AuthProvider({ children }) {
       return { success: true, data }
     } catch (error) {
       console.error('Registration error:', error)
+      // If it's a network error (connection refused, DNS fail, etc.)
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se puede conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3001')
+      }
       throw error
     }
   }
@@ -107,10 +117,16 @@ export function AuthProvider({ children }) {
         body: JSON.stringify({ email, password })
       })
 
-      const data = await response.json()
+      // Try to parse response
+      let data
+      try {
+        data = await response.json()
+      } catch (e) {
+        throw new Error('Error al procesar la respuesta del servidor')
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Error al iniciar sesión')
+        throw new Error(data.error || data.message || 'Error al iniciar sesión')
       }
 
       // Save token and user data
@@ -125,6 +141,10 @@ export function AuthProvider({ children }) {
       return { success: true, data }
     } catch (error) {
       console.error('Login error:', error)
+      // If it's a network error
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        throw new Error('No se puede conectar con el servidor. Asegúrate de que el backend esté corriendo en http://localhost:3001')
+      }
       throw error
     }
   }

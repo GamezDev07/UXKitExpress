@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Check, Sparkles, Zap, Rocket, Building2 } from 'lucide-react'
 import Header from '../components/Header'
+import Footer from '../components/Footer'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 
@@ -274,6 +275,8 @@ export default function PricingPage() {
                     })}
                 </div>
             </section>
+
+            <Footer />
         </div>
     )
 }
