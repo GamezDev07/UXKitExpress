@@ -76,6 +76,21 @@ if (process.env.NODE_ENV === 'development') {
   });
 }
 
+// Root endpoint - Quick server status check
+app.get('/', (req, res) => {
+  res.json({
+    status: 'Backend activo',
+    service: 'UX Kit Express API',
+    version: '1.0.0',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth/*',
+      billing: '/api/billing/*',
+      contact: '/api/contact'
+    }
+  });
+});
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({
