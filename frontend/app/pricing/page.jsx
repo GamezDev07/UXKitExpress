@@ -20,13 +20,14 @@ export default function PricingPage() {
             description: 'Para explorar y probar',
             monthlyPrice: 0,
             yearlyPrice: 0,
-            currency: 'MXN',
+            currency: 'USD',
             icon: Sparkles,
             features: [
-                'Acceso a componentes básicos',
-                '5 descargas por mes',
-                'Soporte comunitario',
-                'Actualizaciones limitadas'
+                '10 componentes básicos (actualizables mensualmente)',
+                '3 plantillas Figma/XD (rotación mensual)',
+                'Generador de código básico (HTML/CSS)',
+                'Comunidad Discord + Foro',
+                '1 proyecto colaborativo (hasta 2 miembros)'
             ],
             cta: 'Comenzar Gratis',
             highlighted: false,
@@ -42,12 +43,13 @@ export default function PricingPage() {
             currency: 'USD',
             icon: Zap,
             features: [
-                'Todo lo de Free',
-                'Descargas ilimitadas',
-                '100+ componentes premium',
-                'Iconos y assets básicos',
-                'Soporte por email',
-                'Actualizaciones mensuales'
+                'Todo Free +',
+                '300+ componentes (acceso completo)',
+                '50 plantillas premium',
+                'Generador React/Tailwind',
+                'Sistema de versionado',
+                'Exportar a 5 formatos (Figma, XD, Sketch, React, Vue)',
+                '3 proyectos colaborativos (hasta 5 miembros)'
             ],
             cta: 'Comenzar con Basic',
             highlighted: false,
@@ -63,14 +65,13 @@ export default function PricingPage() {
             currency: 'USD',
             icon: Rocket,
             features: [
-                'Todo lo de Basic',
-                '500+ componentes premium',
-                'Templates completos',
-                'Ilustraciones y gráficos',
-                'Figma & Sketch files',
-                'Soporte prioritario',
-                'Actualizaciones semanales',
-                'Early access a nuevos recursos'
+                'Todo Basic +',
+                'Componentes personalizables (theme builder)',
+                'Plugin Figma/XD propio',
+                'Generador de documentación automática',
+                'Analytics de uso',
+                '10 proyectos colaborativos (hasta 10 miembros)',
+                'Soporte prioritario'
             ],
             cta: 'Comenzar con Advance',
             highlighted: true,
@@ -87,14 +88,13 @@ export default function PricingPage() {
             currency: 'USD',
             icon: Building2,
             features: [
-                'Todo lo de Advance',
-                '1000+ componentes premium',
-                'Kit completo de diseño',
-                'Biblioteca de animaciones',
-                'Código fuente personalizable',
-                'Múltiples licencias de equipo',
-                'Soporte dedicado 24/7',
-                'Consultoría de diseño mensual'
+                'Todo Advance +',
+                'White-label (marca propia)',
+                'API de componentes',
+                'SSO empresarial',
+                'Componentes ilimitados personalizados',
+                'Onboarding personalizado',
+                'Proyectos ilimitados (miembros ilimitados)'
             ],
             cta: 'Comenzar con Pro',
             highlighted: false,
@@ -110,15 +110,12 @@ export default function PricingPage() {
             currency: 'USD',
             icon: Building2,
             features: [
-                'Todo lo de Pro',
-                'Recursos ilimitados',
-                'Componentes personalizados',
-                'Integración con tu design system',
-                'Licencias ilimitadas',
-                'Manager de cuenta dedicado',
-                'SLA garantizado',
-                'Formación para el equipo',
-                'Soporte on-site disponible'
+                'Todo Pro +',
+                'SLA 99.9%',
+                'Dedicado manager de cuenta',
+                'Custom development',
+                'Migración desde otros sistemas',
+                'Formación para equipos'
             ],
             cta: 'Contactar Ventas',
             highlighted: false,
@@ -127,9 +124,9 @@ export default function PricingPage() {
         }
     ]
 
-    const handleCheckout = async (priceId) => {
+    const handleCheckout = async (planId) => {
         // Si es plan gratuito, redirigir a signup o dashboard
-        if (!priceId) {
+        if (planId === 'free') {
             if (user) {
                 router.push('/dashboard')
             } else {
@@ -138,14 +135,13 @@ export default function PricingPage() {
             return
         }
 
-        // Verificar autenticación antes de procesar el pago
+        // Si no está logueado, redirigir guardando la intención de compra
         if (!user || !token) {
-            // Redirigir a signup para que creen cuenta primero
-            // En la página de signup habrá link para ir a login si ya tienen cuenta
-            router.push('/signup')
+            router.push(`/signup?plan=${planId}&interval=${billingPeriod}`)
             return
         }
 
+        // Usuario logueado: proceder con el pago
         try {
             const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001'
             const response = await fetch(`${API_URL}/api/billing/create-checkout-session`, {
@@ -154,12 +150,15 @@ export default function PricingPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ priceId })
+                body: JSON.stringify({
+                    plan: planId,
+                    billingInterval: billingPeriod
+                })
             })
 
             const { url, error } = await response.json()
             if (error) throw new Error(error)
-            window.location.href = url
+            if (url) window.location.href = url
         } catch (error) {
             console.error('Error al crear checkout:', error)
             alert('Error al procesar el pago. Por favor intenta de nuevo.')
@@ -257,7 +256,7 @@ export default function PricingPage() {
 
                                 <Button
                                     variant={plan.highlighted ? 'primary' : 'secondary'}
-                                    onClick={() => handleCheckout(getPriceId(plan))}
+                                    onClick={() => handleCheckout(plan.id)}
                                     className="w-full mb-6"
                                 >
                                     {plan.cta}

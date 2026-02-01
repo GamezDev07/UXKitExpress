@@ -2,10 +2,13 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 
 export default function SignupPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -64,8 +67,41 @@ export default function SignupPage() {
     setErrors({}); // Clear previous errors
 
     try {
-      await register(formData.email, formData.password, formData.fullName);
-      // Success - register function handles redirect to dashboard
+      const result = await register(formData.email, formData.password, formData.fullName);
+
+      // Verificar si hay parámetros de plan en la URL
+      const planId = searchParams.get('plan');
+      const interval = searchParams.get('interval');
+
+      if (planId && interval && result?.data?.token) {
+        // Iniciar checkout automáticamente con el plan seleccionado
+        try {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+          const response = await fetch(`${API_URL}/api/billing/create-checkout-session`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${result.data.token}`
+            },
+            body: JSON.stringify({
+              plan: planId,
+              billingInterval: interval
+            })
+          });
+
+          const { url, error } = await response.json();
+          if (error) throw new Error(error);
+          if (url) {
+            window.location.href = url;
+            return; // Evitar redirección a dashboard
+          }
+        } catch (checkoutError) {
+          console.error('Error al iniciar checkout:', checkoutError);
+          // Si falla el checkout, redirigir al dashboard normalmente
+          router.push('/dashboard');
+        }
+      }
+      // Si no hay parámetros de plan, el register ya redirige al dashboard
     } catch (error) {
       // Display error to user
       setErrors({
