@@ -18,6 +18,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// ⚠️ CRÍTICO: Habilitar trust proxy para Render y producción
+// Necesario para que express-rate-limit funcione correctamente con proxies reversos
+app.set('trust proxy', 1);
+
 // Middlewares de seguridad
 app.use(helmet());
 
