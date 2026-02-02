@@ -12,86 +12,148 @@ const router = express.Router();
 // Registro de usuario
 router.post('/register', catchAsync(async (req, res) => {
   console.log('=== REGISTER REQUEST RECEIVED ===');
-  console.log('Body:', req.body);
+  console.log('Body:', { ...req.body, password: '***' });
   console.log('Headers:', req.headers);
-  console.log('Origin:', req.headers.origin);
 
   try {
-    const { email, password, fullName } = userSchemas.register.parse(req.body);
+    // Validar datos de entrada (incluyendo sessionId opcional)
+    const { email, password, fullName, sessionId } = req.body;
+
+    if (!email || !password || !fullName) {
+      return res.status(400).json({ error: 'Faltan campos requeridos' });
+    }
+
     console.log('Validation passed for email:', email);
 
-    console.log('Checking for existing user...');
-    console.log('Supabase URL exists:', !!process.env.SUPABASE_URL);
+    // 1. VALIDAR PAGO DE STRIPE (si viene sessionId)
+    let planData = { plan: 'free', interval: 'monthly' };
+    let stripeCustomerId = null;
+    let stripeSubscriptionId = null;
 
-    // Verificar si el usuario ya existe
-    const { data: existingUser, error: checkError } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('email', email)
-      .single();
+    if (sessionId) {
+      console.log('Validating Stripe session:', sessionId);
 
-    console.log('Existing user check result:', { existingUser, checkError });
+      try {
+        const stripe = (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-    if (existingUser) {
-      console.log('User already exists:', email);
-      return res.status(400).json({ error: 'El usuario ya existe' });
-    }
+        console.log('Stripe session retrieved:', {
+          id: session.id,
+          payment_status: session.payment_status,
+          customer: session.customer,
+          subscription: session.subscription
+        });
 
-    // Hashear contraseña
-    console.log('Hashing password...');
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
-    console.log('Password hashed successfully');
-
-    // Crear usuario
-    console.log('Creating user in database...');
-    const { data: user, error } = await supabaseAdmin
-      .from('users')
-      .insert([
-        {
-          email,
-          password_hash: passwordHash,
-          full_name: fullName,
-          current_plan: 'free',
-          subscription_status: 'active'
+        if (session.payment_status !== 'paid') {
+          console.error('Payment not completed for session:', sessionId);
+          return res.status(400).json({
+            error: 'Pago no completado',
+            payment_status: session.payment_status
+          });
         }
-      ])
-      .select()
-      .single();
 
-    if (error) {
-      console.error('Database insert error:', error);
-      throw error;
+        // Extraer datos del plan desde metadata
+        planData.plan = session.metadata?.plan || 'basic';
+        planData.interval = session.metadata?.interval || 'monthly';
+        stripeCustomerId = session.customer;
+        stripeSubscriptionId = session.subscription;
+
+        console.log('Payment validated successfully:', planData);
+      } catch (stripeError) {
+        console.error('Error validating Stripe session:', stripeError);
+        return res.status(400).json({
+          error: 'Error al validar sesión de pago',
+          details: stripeError.message
+        });
+      }
     }
 
-    console.log('User created successfully:', user.id);
+    // 2. CREAR USUARIO EN SUPABASE AUTH (usando Admin API)
+    console.log('Creating user in Supabase Auth...');
 
-    // Crear token JWT
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true, // Auto-confirmar email
+      user_metadata: {
+        full_name: fullName
+      }
+    });
+
+    if (authError) {
+      console.error('Error creating auth user:', authError);
+
+      // Manejar usuario duplicado
+      if (authError.message?.includes('already') || authError.code === '23505') {
+        return res.status(400).json({ error: 'El usuario ya existe' });
+      }
+
+      return res.status(500).json({
+        error: 'Error al crear usuario',
+        details: authError.message
+      });
+    }
+
+    console.log('Auth user created:', authData.user.id);
+
+    // 3. CREAR/ACTUALIZAR REGISTRO EN TABLA USERS
+    console.log('Upserting user in public.users table...');
+
+    const { error: dbError } = await supabaseAdmin
+      .from('users')
+      .upsert({
+        id: authData.user.id,
+        email,
+        full_name: fullName,
+        current_plan: planData.plan,
+        subscription_status: sessionId ? 'active' : 'free',
+        stripe_customer_id: stripeCustomerId,
+        stripe_subscription_id: stripeSubscriptionId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
+      });
+
+    if (dbError) {
+      console.error('Error updating users table:', dbError);
+      // Usuario de auth ya existe, pero tabla users falló
+      // Podríamos intentar eliminar el usuario de auth aquí si es crítico
+      logger.error(`Failed to create user record for ${authData.user.id}: ${dbError.message}`);
+    } else {
+      console.log('User record created/updated successfully');
+    }
+
+    // 4. CREAR TOKEN JWT PARA EL FRONTEND
     console.log('Generating JWT token...');
-    console.log('JWT_SECRET exists:', !!process.env.JWT_SECRET);
 
     const token = jwt.sign(
-      { userId: user.id, email: user.email, plan: user.current_plan },
+      {
+        userId: authData.user.id,
+        email,
+        plan: planData.plan
+      },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
     console.log('JWT generated successfully');
-    logger.info(`Nuevo usuario registrado: ${email}`);
+    logger.info(`New user registered: ${email} (plan: ${planData.plan})`);
 
+    // 5. RESPUESTA EXITOSA
     const response = {
+      success: true,
       user: {
-        id: user.id,
-        email: user.email,
-        fullName: user.full_name,
-        plan: user.current_plan
+        id: authData.user.id,
+        email,
+        fullName,
+        plan: planData.plan,
+        subscriptionStatus: sessionId ? 'active' : 'free'
       },
       token
     };
 
     console.log('Sending success response');
-    console.log('Registration successful');
-
     return res.status(201).json(response);
 
   } catch (error) {
@@ -99,14 +161,6 @@ router.post('/register', catchAsync(async (req, res) => {
     console.error('Error:', error);
     console.error('Error message:', error.message);
     console.error('Stack:', error.stack);
-
-    // If it's a Zod validation error
-    if (error.name === 'ZodError') {
-      return res.status(400).json({
-        error: 'Datos de registro inválidos',
-        details: error.errors
-      });
-    }
 
     return res.status(500).json({
       error: 'Error en el registro',

@@ -9,17 +9,21 @@ import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  // CAMBIO: Usamos 'signUp' y 'supabase' del contexto corregido
-  const { signUp, supabase } = useAuth();
+
+  // Extraer parámetros de URL (incluido session_id de Stripe)
+  const sessionId = searchParams.get('session_id');
+  const selectedPlan = searchParams.get('plan');
+  const selectedInterval = searchParams.get('interval');
 
   const [formData, setFormData] = useState({ fullName: '', email: '', password: '', confirmPassword: '' });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Leer plan seleccionado para UX del botón
-  const selectedPlan = searchParams.get('plan');
+  // Determinar texto del botón según si viene de pago
   const hasPaidPlan = selectedPlan && selectedPlan !== 'free';
-  const buttonText = hasPaidPlan ? 'Continuar al Pago' : 'Crear cuenta gratis';
+  const buttonText = sessionId
+    ? 'Completar Registro'
+    : (hasPaidPlan ? 'Continuar al Pago' : 'Crear cuenta gratis');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -44,59 +48,54 @@ export default function SignupPage() {
     setErrors({});
 
     try {
-      // ✅ CORRECCIÓN: Capturamos el resultado directo (sin { data })
-      // AuthContext devuelve: { user, session, ... }
-      const result = await signUp(formData.email, formData.password, formData.fullName);
+      // ✅ LLAMAR AL BACKEND (NO a Supabase Auth directamente)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          fullName: formData.fullName,
+          sessionId: sessionId || null // Enviar session_id si existe
+        })
+      });
 
-      // Validación robusta: verificamos si tenemos sesión o usuario en la raíz del objeto
-      if (!result.session && !result.user) {
-        throw new Error('No se pudo crear el usuario. Intenta de nuevo.');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al registrar');
       }
 
-      // 2. Lógica de Redirección / Pago
-      const plan = searchParams.get('plan');
-      const interval = searchParams.get('interval');
+      const data = await response.json();
+      console.log('Registration successful:', data);
 
-      if (plan && plan !== 'free') {
-        // Obtenemos el token fresco
-        const { data: { session } } = await supabase.auth.getSession();
+      // Guardar token en localStorage
+      if (data.token) {
+        localStorage.setItem('auth_token', data.token);
+      }
 
-        if (!session) {
-          router.push('/login?message=check_email');
-          return;
-        }
-
-        // Llamada al Backend para Stripe
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing/create-checkout-session`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({
-            plan: plan,
-            billingInterval: interval || 'monthly'
-          })
-        });
-
-        const resData = await response.json();
-        if (resData.error) throw new Error(resData.error);
-        if (resData.url) window.location.href = resData.url;
-
+      // Redirigir según el resultado
+      if (sessionId) {
+        // Usuario viene de pago - ir a dashboard
+        router.push('/dashboard?registered=true');
+      } else if (hasPaidPlan) {
+        // Usuario seleccionó plan pero aún no pagó - redirect a pricing
+        router.push('/pricing?registered=true');
       } else {
-        // Flujo Gratis
-        router.push('/dashboard');
+        // Plan gratuito - ir a dashboard
+        router.push('/dashboard?registered=true');
       }
 
     } catch (error) {
       console.error('Signup Error:', error);
       let msg = error.message || 'Error desconocido';
 
-      // Traducción de errores comunes de Supabase
+      // Traducción de errores comunes
       if (msg.includes('rate_limit') || msg.includes('429')) {
         msg = 'Demasiados intentos. Por favor espera 30 segundos.';
-      } else if (msg.includes('already registered') || msg.includes('User already exists')) {
+      } else if (msg.includes('already') || msg.includes('existe')) {
         msg = 'Este correo ya está registrado. Inicia sesión.';
+      } else if (msg.includes('Pago no completado')) {
+        msg = 'El pago no se pudo verificar. Por favor contacta soporte.';
       }
 
       setErrors({ submit: msg });
@@ -115,6 +114,22 @@ export default function SignupPage() {
 
         <div className="card">
           <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Mensaje de confirmación de pago */}
+            {sessionId && (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg flex items-start gap-3">
+                <svg className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-green-800">✓ Pago completado exitosamente</p>
+                  <p className="text-sm text-green-700 mt-1">
+                    Plan: <strong className="capitalize">{selectedPlan}</strong> ({selectedInterval})
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">Completa tu registro para activar tu suscripción</p>
+                </div>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
               <div className="relative"><User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
