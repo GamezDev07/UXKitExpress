@@ -5,6 +5,7 @@ import { Send, CheckCircle, Loader2, Mail, User, FileText, MessageSquare } from 
 import Header from '../components/Header'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function ContactPage() {
     const { userPlan } = useAuth()
@@ -55,7 +56,7 @@ export default function ContactPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200">
+        <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
             <Header userPlan={userPlan} />
 
             <div className="flex items-center justify-center px-4 sm:px-6 lg:px-8 py-20">
@@ -64,24 +65,24 @@ export default function ContactPage() {
                         <div className="inline-flex p-3 bg-gradient-to-br from-blue-500/20 to-violet-500/20 rounded-full mb-6">
                             <Mail className="w-8 h-8 text-blue-400" />
                         </div>
-                        <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                        <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
                             Hablemos
                         </h1>
-                        <p className="text-xl text-slate-400">
+                        <p className="text-xl text-gray-600 dark:text-slate-400">
                             ¿Tienes preguntas? Estamos aquí para ayudarte.
                         </p>
                     </div>
 
-                    <div className="bg-slate-900/50 border border-white/10 rounded-2xl p-8 backdrop-blur">
+                    <div className="bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-2xl p-8 backdrop-blur">
                         {isSubmitted ? (
                             <div className="text-center py-12">
                                 <div className="inline-flex p-4 bg-green-500/20 rounded-full mb-6">
                                     <CheckCircle className="w-12 h-12 text-green-400" />
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-2">
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                                     ¡Mensaje Enviado!
                                 </h3>
-                                <p className="text-slate-400">
+                                <p className="text-gray-600 dark:text-slate-400">
                                     Nos pondremos en contacto contigo pronto.
                                 </p>
                             </div>
@@ -94,7 +95,7 @@ export default function ContactPage() {
                                 )}
 
                                 <div>
-                                    <label htmlFor="name" className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                                         Nombre Completo
                                     </label>
                                     <div className="relative">
@@ -109,13 +110,13 @@ export default function ContactPage() {
                                             onChange={handleChange}
                                             required
                                             placeholder="Tu nombre"
-                                            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                                         Correo Electrónico
                                     </label>
                                     <div className="relative">
@@ -130,13 +131,13 @@ export default function ContactPage() {
                                             onChange={handleChange}
                                             required
                                             placeholder="tu@email.com"
-                                            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label htmlFor="subject" className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label htmlFor="subject" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                                         Asunto
                                     </label>
                                     <div className="relative">
@@ -151,13 +152,13 @@ export default function ContactPage() {
                                             onChange={handleChange}
                                             required
                                             placeholder="¿En qué podemos ayudarte?"
-                                            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
                                         />
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label htmlFor="message" className="block text-sm font-medium text-slate-300 mb-2">
+                                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                                         Mensaje
                                     </label>
                                     <div className="relative">
@@ -172,7 +173,7 @@ export default function ContactPage() {
                                             required
                                             rows="6"
                                             placeholder="Cuéntanos más sobre tu consulta..."
-                                            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all resize-none"
+                                            className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-slate-800/50 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all resize-none"
                                         />
                                     </div>
                                 </div>
@@ -191,20 +192,20 @@ export default function ContactPage() {
                     </div>
 
                     <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="text-center p-6 bg-slate-900/30 border border-white/10 rounded-xl">
+                        <div className="text-center p-6 bg-gray-100 dark:bg-slate-900/30 border border-gray-200 dark:border-white/10 rounded-xl">
                             <Mail className="w-8 h-8 text-blue-400 mx-auto mb-3" />
-                            <h3 className="font-semibold text-white mb-1">Email</h3>
-                            <p className="text-sm text-slate-400">support@uxkitexpress.com</p>
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Email</h3>
+                            <p className="text-sm text-gray-600 dark:text-slate-400">support@uxkitexpress.com</p>
                         </div>
-                        <div className="text-center p-6 bg-slate-900/30 border border-white/10 rounded-xl">
+                        <div className="text-center p-6 bg-gray-100 dark:bg-slate-900/30 border border-gray-200 dark:border-white/10 rounded-xl">
                             <MessageSquare className="w-8 h-8 text-violet-400 mx-auto mb-3" />
-                            <h3 className="font-semibold text-white mb-1">Chat</h3>
-                            <p className="text-sm text-slate-400">Disponible L-V 9-18h</p>
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Chat</h3>
+                            <p className="text-sm text-gray-600 dark:text-slate-400">Disponible L-V 9-18h</p>
                         </div>
-                        <div className="text-center p-6 bg-slate-900/30 border border-white/10 rounded-xl">
+                        <div className="text-center p-6 bg-gray-100 dark:bg-slate-900/30 border border-gray-200 dark:border-white/10 rounded-xl">
                             <FileText className="w-8 h-8 text-green-400 mx-auto mb-3" />
-                            <h3 className="font-semibold text-white mb-1">Docs</h3>
-                            <p className="text-sm text-slate-400">docs.uxkitexpress.com</p>
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-1">Docs</h3>
+                            <p className="text-sm text-gray-600 dark:text-slate-400">docs.uxkitexpress.com</p>
                         </div>
                     </div>
                 </div>

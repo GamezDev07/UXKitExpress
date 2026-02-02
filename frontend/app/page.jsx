@@ -50,7 +50,7 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-light">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
       <Header />
 
       {/* Build Indicator - Remove after testing */}
@@ -63,22 +63,21 @@ export default function Home() {
       {/* Hero Section */}
       <header className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6 transition-all duration-300" style={{
-            backgroundColor: 'var(--primary-100)',
-            color: 'var(--primary-800)'
-          }}>
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-6 transition-all duration-300 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
             <Sparkles className="w-4 h-4" />
             Lanzamiento especial: 14 días gratis en todos los planes
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
             La suscripción{' '}
-            <span className="text-gradient">Netflix</span>
+            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent">
+              Netflix
+            </span>
             <br />
             para recursos UX/UI
           </h1>
 
-          <p className="text-xl mb-10 max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-xl mb-10 max-w-2xl mx-auto text-gray-600 dark:text-gray-400">
             Miles de componentes, plantillas y herramientas para diseñadores.
             Todo en un solo lugar, actualizado constantemente.
           </p>
@@ -105,40 +104,31 @@ export default function Home() {
       <section className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-3 gap-8">
           <div className="text-center transition-transform duration-300 hover:scale-105">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4" style={{
-              backgroundColor: 'var(--primary-100)',
-              color: 'var(--primary-600)'
-            }}>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <Zap className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Rápido y eficiente</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Rápido y eficiente</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Encuentra lo que necesitas en segundos con nuestro sistema de búsqueda inteligente
             </p>
           </div>
 
           <div className="text-center transition-transform duration-300 hover:scale-105">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4" style={{
-              backgroundColor: 'var(--primary-100)',
-              color: 'var(--primary-600)'
-            }}>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Colaboración en tiempo real</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Colaboración en tiempo real</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Trabaja con tu equipo en proyectos compartidos con edición simultánea
             </p>
           </div>
 
           <div className="text-center transition-transform duration-300 hover:scale-105">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4" style={{
-              backgroundColor: 'var(--primary-100)',
-              color: 'var(--primary-600)'
-            }}>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <Shield className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>Actualizaciones constantes</h3>
-            <p style={{ color: 'var(--text-secondary)' }}>
+            <h3 className="text-xl font-semibold mb-2 text-gray-900 dark:text-white">Actualizaciones constantes</h3>
+            <p className="text-gray-600 dark:text-gray-400">
               Nuevos componentes cada semana. Siempre a la vanguardia del diseño
             </p>
           </div>
@@ -148,10 +138,10 @@ export default function Home() {
       {/* Pricing Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-4xl font-bold mb-4 text-gray-900 dark:text-white">
             Planes que se adaptan a ti
           </h2>
-          <p style={{ color: 'var(--text-secondary)' }}>
+          <p className="text-gray-600 dark:text-gray-400">
             Comienza gratis y actualiza cuando lo necesites
           </p>
         </div>
@@ -165,27 +155,24 @@ export default function Home() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="px-4 py-1 rounded-full text-sm font-medium" style={{
-                    background: 'linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to))',
-                    color: 'white'
-                  }}>
+                  <span className="px-4 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-violet-500 text-white">
                     Más popular
                   </span>
                 </div>
               )}
 
-              <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{plan.name}</h3>
+              <h3 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">{plan.name}</h3>
 
               <div className="mb-6">
-                <span className="text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>${plan.price}</span>
-                <span style={{ color: 'var(--text-secondary)' }}>/{plan.period}</span>
+                <span className="text-4xl font-bold text-gray-900 dark:text-white">${plan.price}</span>
+                <span className="text-gray-600 dark:text-gray-400">/{plan.period}</span>
               </div>
 
               <ul className="space-y-4 mb-8">
                 {plan.features.map((feature, idx) => (
                   <li key={idx} className="flex items-center gap-3">
                     <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                    <span className="text-gray-600 dark:text-gray-400">{feature}</span>
                   </li>
                 ))}
               </ul>

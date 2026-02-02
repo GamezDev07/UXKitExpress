@@ -6,6 +6,7 @@ import { Check, Sparkles, Zap, Rocket, Building2 } from 'lucide-react'
 import Header from '../components/Header'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function PricingPage() {
     const { user, userPlan, token } = useAuth()
@@ -159,16 +160,16 @@ export default function PricingPage() {
     const getPrice = (plan) => billingPeriod === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200">
+        <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
             <Header userPlan={userPlan} />
             <section className="py-20 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-4xl mx-auto text-center">
-                    <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">Planes que crecen contigo</h1>
-                    <p className="text-xl text-slate-400 mb-12">Elige el plan perfecto para tus necesidades.</p>
+                    <h1 className="text-5xl md:text-6xl font-bold text-gray-900 dark:text-white mb-6">Planes que crecen contigo</h1>
+                    <p className="text-xl text-gray-600 dark:text-slate-400 mb-12">Elige el plan perfecto para tus necesidades.</p>
 
-                    <div className="inline-flex items-center gap-4 p-1 bg-slate-900/50 border border-white/10 rounded-lg backdrop-blur">
-                        <button onClick={() => setBillingPeriod('monthly')} className={`px-6 py-2 rounded-md font-medium transition-all ${billingPeriod === 'monthly' ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white' : 'text-slate-400 hover:text-white'}`}>Mensual</button>
-                        <button onClick={() => setBillingPeriod('yearly')} className={`px-6 py-2 rounded-md font-medium transition-all relative ${billingPeriod === 'yearly' ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white' : 'text-slate-400 hover:text-white'}`}>Anual <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-white px-2 py-1 rounded">Ahorra 17%</span></button>
+                    <div className="inline-flex items-center gap-4 p-1 bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 rounded-lg backdrop-blur">
+                        <button onClick={() => setBillingPeriod('monthly')} className={`px-6 py-2 rounded-md font-medium transition-all ${billingPeriod === 'monthly' ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white' : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'}`}>Mensual</button>
+                        <button onClick={() => setBillingPeriod('yearly')} className={`px-6 py-2 rounded-md font-medium transition-all relative ${billingPeriod === 'yearly' ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white' : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-white'}`}>Anual <span className="absolute -top-8 left-1/2 -translate-x-1/2 text-xs bg-green-500 text-white px-2 py-1 rounded">Ahorra 17%</span></button>
                     </div>
                 </div>
             </section>
@@ -178,14 +179,14 @@ export default function PricingPage() {
                     {plans.map((plan) => {
                         const Icon = plan.icon
                         return (
-                            <div key={plan.id} className={`relative bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col ${plan.highlighted ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 'border-white/10 hover:border-white/20'} transition-all duration-300 hover:-translate-y-1`}>
+                            <div key={plan.id} className={`relative bg-white dark:bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col ${plan.highlighted ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'} transition-all duration-300 hover:-translate-y-1`}>
                                 {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2"><span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold rounded-full">{plan.badge}</span></div>}
-                                <div className="mb-4"><div className={`inline-flex p-3 rounded-lg ${plan.highlighted ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20' : 'bg-white/5'}`}><Icon className={`w-6 h-6 ${plan.highlighted ? 'text-blue-400' : 'text-slate-400'}`} /></div></div>
-                                <h3 className="text-2xl font-bold text-white mb-2">{plan.name}</h3>
-                                <p className="text-slate-400 text-sm mb-6">{plan.description}</p>
-                                <div className="mb-6"><div className="flex items-baseline gap-2"><span className="text-4xl font-bold text-white">${getPrice(plan)}</span><span className="text-slate-400">{plan.currency}</span></div><p className="text-slate-500 text-sm mt-1">por {billingPeriod === 'monthly' ? 'mes' : 'año'}</p></div>
+                                <div className="mb-4"><div className={`inline-flex p-3 rounded-lg ${plan.highlighted ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20' : 'bg-gray-100 dark:bg-white/5'}`}><Icon className={`w-6 h-6 ${plan.highlighted ? 'text-blue-400' : 'text-gray-600 dark:text-slate-400'}`} /></div></div>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
+                                <p className="text-gray-600 dark:text-slate-400 text-sm mb-6">{plan.description}</p>
+                                <div className="mb-6"><div className="flex items-baseline gap-2"><span className="text-4xl font-bold text-gray-900 dark:text-white">${getPrice(plan)}</span><span className="text-gray-600 dark:text-slate-400">{plan.currency}</span></div><p className="text-gray-500 dark:text-slate-500 text-sm mt-1">por {billingPeriod === 'monthly' ? 'mes' : 'año'}</p></div>
                                 <Button variant={plan.highlighted ? 'primary' : 'secondary'} onClick={() => handleCheckout(plan.id)} className="w-full mb-6">{plan.cta}</Button>
-                                <ul className="space-y-3 flex-1">{plan.features.map((feature, idx) => (<li key={idx} className="flex items-start gap-3"><Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" /><span className="text-sm text-slate-300">{feature}</span></li>))}</ul>
+                                <ul className="space-y-3 flex-1">{plan.features.map((feature, idx) => (<li key={idx} className="flex items-start gap-3"><Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" /><span className="text-sm text-gray-700 dark:text-slate-300">{feature}</span></li>))}</ul>
                             </div>
                         )
                     })}
