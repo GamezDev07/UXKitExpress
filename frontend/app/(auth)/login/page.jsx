@@ -14,7 +14,7 @@ export default function LoginPage() {
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const { login } = useAuth();
+  const { signIn } = useAuth(); // ✅ Cambiado de 'login' a 'signIn'
 
   const handleChange = (e) => {
     setFormData({
@@ -52,10 +52,11 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      const result = await login(formData.email, formData.password);
+      // ✅ Usar signIn en lugar de login
+      const result = await signIn(formData.email, formData.password);
 
-      // Redirección manual ahora que AuthContext no redirige automáticamente
-      if (result?.success) {
+      // Supabase auth retorna { user, session }
+      if (result?.user) {
         router.push('/dashboard');
       }
     } catch (error) {
