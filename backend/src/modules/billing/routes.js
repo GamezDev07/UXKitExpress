@@ -167,7 +167,13 @@ router.post('/create-checkout', async (req, res) => {
 
 // Crear sesión de checkout
 router.post('/create-checkout-session', authenticate, catchAsync(async (req, res) => {
-  const userId = req.user.userId;
+  // ✅ CORRECCIÓN: El ID en los tokens de Supabase viene en 'sub' o 'id'
+  const userId = req.user.sub || req.user.id || req.user.userId;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Token inválido: No se encontró el ID de usuario.' });
+  }
+
   const { plan, billingInterval, successUrl, cancelUrl } = billingSchemas.checkout.parse(req.body);
 
   // Obtener usuario
