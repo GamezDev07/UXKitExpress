@@ -11,6 +11,7 @@ export default function Header({ userPlan = null }) {
     const pathname = usePathname()
     const router = useRouter()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+    const [showLogoutModal, setShowLogoutModal] = useState(false)
     const { user, signOut } = useAuth()
     const { isDark, toggleTheme } = useTheme()
 
@@ -25,9 +26,11 @@ export default function Header({ userPlan = null }) {
     const handleLogout = async () => {
         try {
             await signOut()
+            setShowLogoutModal(false)
             router.push('/login')
         } catch (error) {
             console.error('Error al cerrar sesión:', error)
+            alert('Error al cerrar sesión')
         }
     }
 
@@ -93,7 +96,7 @@ export default function Header({ userPlan = null }) {
                                     <User className="w-5 h-5 text-white" />
                                 </button>
                                 <button
-                                    onClick={handleLogout}
+                                    onClick={() => setShowLogoutModal(true)}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
                                 >
                                     <LogOut className="w-4 h-4" />
@@ -168,7 +171,7 @@ export default function Header({ userPlan = null }) {
                                 <button
                                     onClick={() => {
                                         setMobileMenuOpen(false);
-                                        handleLogout();
+                                        setShowLogoutModal(true);
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
                                 >
@@ -180,6 +183,34 @@ export default function Header({ userPlan = null }) {
                     </div>
                 )}
             </div>
+
+            {/* Logout Confirmation Modal */}
+            {showLogoutModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+                            ¿Cerrar sesión?
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300 mb-6">
+                            ¿Estás seguro de que deseas salir de tu cuenta?
+                        </p>
+                        <div className="flex gap-3 justify-end">
+                            <button
+                                onClick={() => setShowLogoutModal(false)}
+                                className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
+                            >
+                                Cerrar sesión
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </header>
     )
 }

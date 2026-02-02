@@ -5,6 +5,7 @@ import { Search, Download, Lock, Star, Grid3x3, LayoutGrid, FileCode, Box, Menu 
 import Header from '../components/Header'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
+import { useTheme } from '../context/ThemeContext'
 
 export default function DashboardPage() {
     const { userPlan = 'free' } = useAuth()
@@ -114,31 +115,31 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-200">
+        <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
             <Header userPlan={userPlan} />
 
-            <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-white/10">
+            <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-200 dark:border-white/10">
                 <div className="max-w-7xl mx-auto">
-                    <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+                    <h1 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-4">
                         Biblioteca de Recursos UX/UI
                     </h1>
-                    <p className="text-xl text-slate-400">
+                    <p className="text-xl text-gray-600 dark:text-slate-400">
                         Miles de componentes, iconos y templates listos para usar
                     </p>
                 </div>
             </section>
 
-            <section className="py-8 px-4 sm:px-6 lg:px-8 border-b border-white/10">
+            <section className="py-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 dark:border-white/10">
                 <div className="max-w-7xl mx-auto">
                     <div className="mb-6">
                         <div className="relative max-w-xl">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-slate-400" />
                             <input
                                 type="text"
                                 placeholder="Buscar componentes, iconos, templates..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-4 py-3 bg-slate-900/50 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
+                                className="w-full pl-12 pr-4 py-3 bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent"
                             />
                         </div>
                     </div>
@@ -152,8 +153,8 @@ export default function DashboardPage() {
                                     key={category.id}
                                     onClick={() => setSelectedCategory(category.id)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${isActive
-                                            ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
-                                            : 'bg-slate-900/50 border border-white/10 text-slate-300 hover:text-white hover:border-white/20'
+                                        ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
+                                        : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/20'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -168,7 +169,7 @@ export default function DashboardPage() {
             <section className="py-12 px-4 sm:px-6 lg:px-8">
                 <div className="max-w-7xl mx-auto">
                     <div className="flex items-center justify-between mb-8">
-                        <p className="text-slate-400">
+                        <p className="text-gray-600 dark:text-slate-400">
                             {filteredComponents.length} componentes encontrados
                         </p>
                     </div>
@@ -180,9 +181,9 @@ export default function DashboardPage() {
                             return (
                                 <div
                                     key={component.id}
-                                    className="group bg-slate-900/50 border border-white/10 rounded-xl overflow-hidden hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
+                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
                                 >
-                                    <div className="relative aspect-[4/3] bg-slate-800 overflow-hidden">
+                                    <div className="relative aspect-[4/3] bg-gray-200 dark:bg-slate-800 overflow-hidden">
                                         <img
                                             src={component.thumbnail}
                                             alt={component.name}
@@ -190,10 +191,10 @@ export default function DashboardPage() {
                                         />
 
                                         {!hasAccess && (
-                                            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
+                                            <div className="absolute inset-0 bg-gray-900/80 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
                                                 <div className="text-center">
-                                                    <Lock className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                                                    <p className="text-sm text-slate-300 font-semibold">
+                                                    <Lock className="w-12 h-12 text-gray-400 dark:text-slate-400 mx-auto mb-2" />
+                                                    <p className="text-sm text-gray-300 dark:text-slate-300 font-semibold">
                                                         Plan {component.requiredPlan.toUpperCase()}+
                                                     </p>
                                                 </div>
@@ -211,11 +212,11 @@ export default function DashboardPage() {
                                     </div>
 
                                     <div className="p-4">
-                                        <h3 className="text-lg font-semibold text-white mb-2 line-clamp-1">
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-1">
                                             {component.name}
                                         </h3>
 
-                                        <div className="flex items-center gap-4 text-sm text-slate-400 mb-4">
+                                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-slate-400 mb-4">
                                             <div className="flex items-center gap-1">
                                                 <Download className="w-4 h-4" />
                                                 {component.downloads}
@@ -230,7 +231,7 @@ export default function DashboardPage() {
                                             {component.tags.slice(0, 2).map((tag) => (
                                                 <span
                                                     key={tag}
-                                                    className="px-2 py-1 bg-white/5 border border-white/10 rounded text-xs text-slate-400"
+                                                    className="px-2 py-1 bg-gray-200 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded text-xs text-gray-600 dark:text-slate-400"
                                                 >
                                                     {tag}
                                                 </span>
@@ -254,13 +255,13 @@ export default function DashboardPage() {
 
                     {filteredComponents.length === 0 && (
                         <div className="text-center py-20">
-                            <div className="inline-flex p-4 bg-slate-900/50 border border-white/10 rounded-full mb-4">
-                                <Search className="w-8 h-8 text-slate-400" />
+                            <div className="inline-flex p-4 bg-gray-100 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-full mb-4">
+                                <Search className="w-8 h-8 text-gray-400 dark:text-slate-400" />
                             </div>
-                            <h3 className="text-xl font-semibold text-white mb-2">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                                 No se encontraron componentes
                             </h3>
-                            <p className="text-slate-400">
+                            <p className="text-gray-600 dark:text-slate-400">
                                 Intenta con otros términos de búsqueda o filtros
                             </p>
                         </div>
