@@ -94,13 +94,46 @@ export default function PricingPage() {
             return
         }
 
-        // Caso 2: Usuario NO logueado (Guardar intención y redirigir)
+        // Caso 2: Usuario NO logueado - CREAR SESIÓN DE STRIPE PRIMERO
         if (!user || !token) {
-            router.push(`/signup?plan=${planId}&interval=${billingPeriod}`)
-            return
+            try {
+                console.log(`Creando checkout para ${planId} ${billingPeriod}...`);
+
+                // Llamar al backend para crear sesión de Stripe (SIN autenticación)
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing/create-checkout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        plan: planId.toLowerCase(),
+                        interval: billingPeriod.toLowerCase()
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Error al crear sesión de pago');
+                }
+
+                const { url } = await response.json();
+
+                if (!url) {
+                    throw new Error('No se recibió URL de checkout');
+                }
+
+                // Redirigir a Stripe Checkout
+                console.log('Redirigiendo a Stripe:', url);
+                window.location.href = url;
+
+            } catch (error) {
+                console.error('Error al procesar pago:', error);
+                alert('Hubo un error al procesar el pago. Por favor intenta de nuevo.');
+            }
+            return;
         }
 
-        // Caso 3: Usuario Logueado (Procesar pago directo)
+        // Caso 3: Usuario Logueado (Procesar pago directo con autenticación)
         try {
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/billing/create-checkout-session`, {
                 method: 'POST',
