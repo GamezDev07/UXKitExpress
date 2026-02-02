@@ -16,6 +16,11 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  // Leer plan seleccionado para UX del botón
+  const selectedPlan = searchParams.get('plan');
+  const hasPaidPlan = selectedPlan && selectedPlan !== 'free';
+  const buttonText = hasPaidPlan ? 'Continuar al Pago' : 'Crear cuenta gratis';
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     if (errors[e.target.name]) setErrors({ ...errors, [e.target.name]: '' });
@@ -143,7 +148,7 @@ export default function SignupPage() {
             {errors.submit && <div className="p-4 bg-red-50 border border-red-200 rounded-lg"><p className="text-sm text-red-600">{errors.submit}</p></div>}
 
             <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Procesando...' : <><span className="mr-2">Crear cuenta gratis</span><ArrowRight className="w-5 h-5" /></>}
+              {loading ? 'Procesando...' : <><span className="mr-2">{buttonText}</span><ArrowRight className="w-5 h-5" /></>}
             </button>
           </form>
 
