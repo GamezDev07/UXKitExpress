@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X, User, LogOut, Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../context/AuthContext'
@@ -9,8 +9,9 @@ import { useTheme } from '../context/ThemeContext'
 
 export default function Header({ userPlan = null }) {
     const pathname = usePathname()
+    const router = useRouter()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-    const { user, logout } = useAuth()
+    const { user, signOut } = useAuth()
     const { isDark, toggleTheme } = useTheme()
 
     const navLinks = [
@@ -20,6 +21,15 @@ export default function Header({ userPlan = null }) {
     ]
 
     const isActive = (href) => pathname === href
+
+    const handleLogout = async () => {
+        try {
+            await signOut()
+            router.push('/login')
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error)
+        }
+    }
 
     return (
         <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-50 bg-slate-950/80">
@@ -75,11 +85,15 @@ export default function Header({ userPlan = null }) {
                             </Link>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <button className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all">
+                                <button
+                                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all opacity-50 cursor-not-allowed"
+                                    disabled
+                                    title="Próximamente"
+                                >
                                     <User className="w-5 h-5 text-white" />
                                 </button>
                                 <button
-                                    onClick={logout}
+                                    onClick={handleLogout}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
                                 >
                                     <LogOut className="w-4 h-4" />
@@ -154,7 +168,7 @@ export default function Header({ userPlan = null }) {
                                 <button
                                     onClick={() => {
                                         setMobileMenuOpen(false);
-                                        logout();
+                                        handleLogout();
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
                                 >
