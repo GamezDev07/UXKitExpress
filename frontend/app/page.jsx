@@ -70,7 +70,7 @@ export default function Home() {
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
             La suscripción{' '}
-            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent">
               Netflix
             </span>
             <br />
@@ -155,7 +155,7 @@ export default function Home() {
             >
               {plan.popular && (
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                  <span className="px-4 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-violet-500 text-white">
+                  <span className="px-4 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white">
                     Más popular
                   </span>
                 </div>

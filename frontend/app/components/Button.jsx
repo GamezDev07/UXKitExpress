@@ -16,7 +16,7 @@ export default function Button({
     const baseStyles = 'font-semibold rounded-lg transition-all inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed'
 
     const variants = {
-        primary: 'bg-gradient-to-r from-blue-500 to-violet-500 text-white hover:shadow-lg hover:shadow-blue-500/50',
+        primary: 'bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white hover:shadow-lg hover:shadow-red-500/50 dark:hover:shadow-blue-500/50',
         secondary: 'bg-white/10 text-white hover:bg-white/20',
         outline: 'border border-white/10 text-white hover:border-white/20 hover:bg-white/5',
         ghost: 'text-slate-300 hover:text-white hover:bg-white/5',

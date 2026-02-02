@@ -40,7 +40,7 @@ export default function Header({ userPlan = null }) {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 bg-clip-text text-transparent">
+                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent">
                             UX Kit Express
                         </span>
                     </Link>
@@ -62,7 +62,7 @@ export default function Header({ userPlan = null }) {
 
                         {/* User Plan Badge */}
                         {userPlan && (
-                            <div className="px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold rounded-full">
+                            <div className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full">
                                 Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                             </div>
                         )}
@@ -84,7 +84,7 @@ export default function Header({ userPlan = null }) {
                         {!userPlan ? (
                             <Link
                                 href="/login"
-                                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-blue-500/50 transition-all"
+                                className="px-4 py-2 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-red-500/50 dark:hover:shadow-blue-500/50 transition-all"
                             >
                                 Iniciar Sesión
                             </Link>
@@ -135,7 +135,7 @@ export default function Header({ userPlan = null }) {
                                 </Link>
                             ))}
                             {userPlan && (
-                                <div className="inline-flex px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-500 text-white text-sm font-semibold rounded-full w-fit">
+                                <div className="inline-flex px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full w-fit">
                                     Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                                 </div>
                             )}
@@ -165,7 +165,7 @@ export default function Header({ userPlan = null }) {
                                 <Link
                                     href="/login"
                                     onClick={() => setMobileMenuOpen(false)}
-                                    className="px-4 py-2 bg-gradient-to-r from-blue-500 to-violet-500 text-white font-semibold rounded-lg text-center"
+                                    className="px-4 py-2 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white font-semibold rounded-lg text-center hover:shadow-lg hover:shadow-red-500/50 dark:hover:shadow-blue-500/50 transition-all"
                                 >
                                     Iniciar Sesión
                                 </Link>

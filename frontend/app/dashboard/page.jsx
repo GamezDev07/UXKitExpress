@@ -153,7 +153,7 @@ export default function DashboardPage() {
                                     key={category.id}
                                     onClick={() => setSelectedCategory(category.id)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${isActive
-                                        ? 'bg-gradient-to-r from-blue-500 to-violet-500 text-white'
+                                        ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white'
                                         : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/20'
                                         }`}
                                 >
