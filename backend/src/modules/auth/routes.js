@@ -105,8 +105,8 @@ router.post('/register', catchAsync(async (req, res) => {
         id: authData.user.id,
         email,
         full_name: fullName,
-        current_plan: planData.plan,
-        subscription_status: sessionId ? 'active' : 'free',
+        current_plan: planData.plan || 'free',
+        subscription_status: 'active', // ✅ Siempre 'active' - el plan se maneja en current_plan
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: stripeSubscriptionId,
         created_at: new Date().toISOString(),
