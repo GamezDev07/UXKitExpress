@@ -26,12 +26,30 @@ export default function Header({ userPlan = null }) {
 
     const handleLogout = async () => {
         try {
-            await signOut()
+            console.log('🚪 Logging out...')
+
+            // Close the modal first
             setShowLogoutModal(false)
-            router.push('/login')
+
+            // Sign out from Supabase
+            await signOut()
+
+            // Clear all localStorage and sessionStorage
+            console.log('🧹 Clearing all storage...')
+            localStorage.clear()
+            sessionStorage.clear()
+
+            // Force a full page reload to /login to ensure clean state
+            console.log('✅ Logout successful, redirecting...')
+            window.location.href = '/login'
+
         } catch (error) {
-            console.error('Error al cerrar sesión:', error)
-            alert('Error al cerrar sesión')
+            console.error('❌ Error al cerrar sesión:', error)
+
+            // Even on error, clear everything and redirect
+            localStorage.clear()
+            sessionStorage.clear()
+            window.location.href = '/login'
         }
     }
 

@@ -90,8 +90,9 @@ export default function PricingPage() {
     const handleCheckout = async (planId) => {
         // Caso 1: Plan Gratuito
         if (planId === 'free') {
-            if (user) router.push('/dashboard')
-            else router.push('/signup')
+            // Redirigir a signup sin importar si el usuario está logueado o no
+            // La página de signup manejará el caso de usuarios ya autenticados
+            router.push('/signup')
             return
         }
 
