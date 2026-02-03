@@ -57,7 +57,8 @@ export default function LoginPage() {
 
       // Supabase auth retorna { user, session }
       if (result?.user) {
-        router.push('/dashboard');
+        // Redirigir con param para mostrar mensaje de bienvenida
+        window.location.href = '/dashboard?loggedin=true';
       }
     } catch (error) {
       setErrors({

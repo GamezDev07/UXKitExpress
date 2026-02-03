@@ -9,6 +9,7 @@ import { Mail, Lock, User, ArrowRight } from 'lucide-react';
 export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { signIn } = useAuth(); // ✅ Extract signIn at component level
 
   // Extraer parámetros de URL (incluido session_id de Stripe)
   const sessionId = searchParams.get('session_id');
@@ -73,16 +74,25 @@ export default function SignupPage() {
         localStorage.setItem('auth_token', data.token);
       }
 
+      // ✅ IMPORTANTE: Iniciar sesión con Supabase para actualizar AuthContext
+      console.log('🔐 Auto-signing in with Supabase...');
+      try {
+        await signIn(formData.email, formData.password);
+        console.log('✅ Auto sign-in successful');
+      } catch (signInError) {
+        console.warn('⚠️ Auto sign-in failed, will need manual login:', signInError);
+      }
+
       // Redirigir según el resultado
       if (sessionId) {
         // Usuario viene de pago - ir a dashboard
-        router.push('/dashboard?registered=true');
+        window.location.href = '/dashboard?registered=true';
       } else if (hasPaidPlan) {
         // Usuario seleccionó plan pero aún no pagó - redirect a pricing
-        router.push('/pricing?registered=true');
+        window.location.href = '/pricing?registered=true';
       } else {
         // Plan gratuito - ir a dashboard
-        router.push('/dashboard?registered=true');
+        window.location.href = '/dashboard?registered=true';
       }
 
     } catch (error) {

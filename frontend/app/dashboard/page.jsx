@@ -1,20 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Search, Download, Lock, Star, Grid3x3, LayoutGrid, FileCode, Box, Menu } from 'lucide-react'
 import Header from '../components/Header'
 import Button from '../components/Button'
+import WelcomeToast from '../components/WelcomeToast'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
-import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { user, userPlan, supabase, loading: authLoading } = useAuth()
     const [userData, setUserData] = useState(null)
     const [loadingUserData, setLoadingUserData] = useState(true)
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchQuery, setSearchQuery] = useState('')
+    const [showWelcome, setShowWelcome] = useState(false)
 
     // Fetch user data from database
     useEffect(() => {
@@ -60,6 +63,23 @@ export default function DashboardPage() {
 
     // Use the plan from userData if available, otherwise fall back to userPlan from AuthContext
     const currentPlan = userData?.current_plan || userPlan || 'free'
+
+    // Check for welcome message trigger (from signup or login)
+    useEffect(() => {
+        const registered = searchParams.get('registered')
+        const loggedIn = searchParams.get('loggedin')
+
+        if ((registered === 'true' || loggedIn === 'true') && userData) {
+            console.log('🎉 Showing welcome message for:', userData.full_name)
+            setShowWelcome(true)
+
+            // Remove the query params from URL after showing
+            const url = new URL(window.location.href)
+            url.searchParams.delete('registered')
+            url.searchParams.delete('loggedin')
+            window.history.replaceState({}, '', url.pathname)
+        }
+    }, [searchParams, userData])
 
     const categories = [
         { id: 'all', name: 'Todos', icon: LayoutGrid },
@@ -166,6 +186,13 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
             <Header userPlan={currentPlan} />
+
+            {/* Welcome Message Toast */}
+            <WelcomeToast
+                userName={userData?.full_name || user?.user_metadata?.full_name || 'Usuario'}
+                show={showWelcome}
+                onClose={() => setShowWelcome(false)}
+            />
 
             <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-200 dark:border-white/10">
                 <div className="max-w-7xl mx-auto">
