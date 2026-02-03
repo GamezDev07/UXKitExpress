@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Menu, X, User, LogOut, Sun, Moon } from 'lucide-react'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -186,10 +187,10 @@ export default function Header({ userPlan = null }) {
                 )}
             </div>
 
-            {/* Logout Confirmation Modal */}
-            {showLogoutModal && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full mx-4">
+            {/* Logout Confirmation Modal - Rendered via Portal */}
+            {showLogoutModal && typeof document !== 'undefined' && createPortal(
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
                             ¿Cerrar sesión?
                         </h3>
@@ -211,7 +212,8 @@ export default function Header({ userPlan = null }) {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </header>
     )

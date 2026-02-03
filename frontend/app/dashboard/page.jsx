@@ -1,16 +1,65 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Search, Download, Lock, Star, Grid3x3, LayoutGrid, FileCode, Box, Menu } from 'lucide-react'
 import Header from '../components/Header'
 import Button from '../components/Button'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
-    const { userPlan = 'free' } = useAuth()
+    const router = useRouter()
+    const { user, userPlan, supabase, loading: authLoading } = useAuth()
+    const [userData, setUserData] = useState(null)
+    const [loadingUserData, setLoadingUserData] = useState(true)
     const [selectedCategory, setSelectedCategory] = useState('all')
     const [searchQuery, setSearchQuery] = useState('')
+
+    // Fetch user data from database
+    useEffect(() => {
+        async function loadUserData() {
+            if (!user) {
+                setLoadingUserData(false)
+                return
+            }
+
+            try {
+                console.log('📊 Loading user data for:', user.id)
+
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
+
+                if (error) {
+                    console.error('❌ Error loading user data:', error)
+                    setLoadingUserData(false)
+                    return
+                }
+
+                console.log('✅ User data loaded:', data)
+                console.log('📌 Current plan:', data?.current_plan)
+                setUserData(data)
+            } catch (error) {
+                console.error('❌ Exception loading user data:', error)
+            } finally {
+                setLoadingUserData(false)
+            }
+        }
+
+        loadUserData()
+    }, [user, supabase])
+
+    // Debug: Log plan from both sources
+    useEffect(() => {
+        console.log('🔍 Plan from AuthContext:', userPlan)
+        console.log('🔍 Plan from userData:', userData?.current_plan)
+    }, [userPlan, userData])
+
+    // Use the plan from userData if available, otherwise fall back to userPlan from AuthContext
+    const currentPlan = userData?.current_plan || userPlan || 'free'
 
     const categories = [
         { id: 'all', name: 'Todos', icon: LayoutGrid },
@@ -92,7 +141,7 @@ export default function DashboardPage() {
     const planHierarchy = { free: 0, basic: 1, advance: 2, pro: 3, enterprise: 4 }
 
     const canAccessComponent = (requiredPlan) => {
-        return planHierarchy[userPlan] >= planHierarchy[requiredPlan]
+        return planHierarchy[currentPlan] >= planHierarchy[requiredPlan]
     }
 
     const filteredComponents = components.filter(component => {
@@ -116,7 +165,7 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
-            <Header userPlan={userPlan} />
+            <Header userPlan={currentPlan} />
 
             <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-200 dark:border-white/10">
                 <div className="max-w-7xl mx-auto">
