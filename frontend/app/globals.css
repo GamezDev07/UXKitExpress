@@ -42,8 +42,14 @@
   --input-border: #d1d5db;
 
   /* Accent Colors */
-  --accent-gradient-from: #3b82f6;
-  --accent-gradient-to: #8b5cf6;
+  --accent-gradient-from: #dc2626;
+  /* red-600 */
+  --accent-gradient-via: #ef4444;
+  /* red-500 */
+  --accent-gradient-to: #f97316;
+  /* orange-500 */
+  --accent-shadow: rgba(220, 38, 38, 0.5);
+  /* red shadow */
 }
 
 /* Dark Theme (Based on Pricing Page - slate-950) */
@@ -72,7 +78,13 @@
 
   /* Accent Colors for Dark Mode */
   --accent-gradient-from: #3b82f6;
+  /* blue-500 */
+  --accent-gradient-via: #3b82f6;
+  /* blue-500 */
   --accent-gradient-to: #8b5cf6;
+  /* violet-500 */
+  --accent-shadow: rgba(59, 130, 246, 0.5);
+  /* blue shadow */
 }
 
 /* ===========================
@@ -127,14 +139,14 @@
   /* Buttons with Modern Hover Effects */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed;
-    background: linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to));
+    background: linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-via), var(--accent-gradient-to));
     color: white;
     transform: scale(1);
   }
 
   .btn-primary:hover:not(:disabled) {
     transform: scale(1.05);
-    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.5);
+    box-shadow: 0 10px 25px -5px var(--accent-shadow);
   }
 
   .btn-primary:active:not(:disabled) {
@@ -254,7 +266,7 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-to));
+    background-image: linear-gradient(135deg, var(--accent-gradient-from), var(--accent-gradient-via), var(--accent-gradient-to));
   }
 
   .shadow-glow {
