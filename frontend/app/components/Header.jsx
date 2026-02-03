@@ -79,8 +79,8 @@ export default function Header({ userPlan = null }) {
                             </Link>
                         ))}
 
-                        {/* User Plan Badge */}
-                        {userPlan && (
+                        {/* User Plan Badge - Only show if user is logged in */}
+                        {user && userPlan && (
                             <div className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full">
                                 Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                             </div>
@@ -99,8 +99,8 @@ export default function Header({ userPlan = null }) {
                             )}
                         </button>
 
-                        {/* Auth Button */}
-                        {!userPlan ? (
+                        {/* Auth Button - Check user object, not userPlan */}
+                        {!user ? (
                             <Link
                                 href="/login"
                                 className="px-4 py-2 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-red-500/50 dark:hover:shadow-blue-500/50 transition-all"
@@ -153,7 +153,7 @@ export default function Header({ userPlan = null }) {
                                     {link.label}
                                 </Link>
                             ))}
-                            {userPlan && (
+                            {user && userPlan && (
                                 <div className="inline-flex px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full w-fit">
                                     Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                                 </div>
@@ -180,7 +180,7 @@ export default function Header({ userPlan = null }) {
                                 )}
                             </button>
 
-                            {!userPlan ? (
+                            {!user ? (
                                 <Link
                                     href="/login"
                                     onClick={() => setMobileMenuOpen(false)}
