@@ -186,7 +186,22 @@ export default function PricingPage() {
                                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>
                                 <p className="text-gray-600 dark:text-slate-400 text-sm mb-6">{plan.description}</p>
                                 <div className="mb-6"><div className="flex items-baseline gap-2"><span className="text-4xl font-bold text-gray-900 dark:text-white">${getPrice(plan)}</span><span className="text-gray-600 dark:text-slate-400">{plan.currency}</span></div><p className="text-gray-500 dark:text-slate-500 text-sm mt-1">por {billingPeriod === 'monthly' ? 'mes' : 'año'}</p></div>
-                                <Button variant={plan.highlighted ? 'primary' : 'secondary'} onClick={() => handleCheckout(plan.id)} className="w-full mb-6">{plan.cta}</Button>
+                                {plan.id === 'enterprise' ? (
+                                    <div className="relative group w-full mb-6">
+                                        <button
+                                            disabled
+                                            className="w-full px-6 py-3 rounded-xl font-semibold bg-gray-100 dark:bg-slate-800 text-gray-400 dark:text-slate-600 cursor-not-allowed border border-gray-200 dark:border-slate-700 select-none transition-colors"
+                                        >
+                                            Coming Soon
+                                        </button>
+                                        <div className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 bg-gray-900 dark:bg-white text-white dark:text-slate-900 text-xs font-medium rounded-lg whitespace-nowrap pointer-events-none shadow-xl transform translate-y-1 group-hover:translate-y-0 text-center z-10">
+                                            Disponible próximamente
+                                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-white"></div>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <Button variant={plan.highlighted ? 'primary' : 'secondary'} onClick={() => handleCheckout(plan.id)} className="w-full mb-6">{plan.cta}</Button>
+                                )}
                                 <ul className="space-y-3 flex-1">{plan.features.map((feature, idx) => (<li key={idx} className="flex items-start gap-3"><Check className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" /><span className="text-sm text-gray-700 dark:text-slate-300">{feature}</span></li>))}</ul>
                             </div>
                         )
