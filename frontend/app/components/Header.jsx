@@ -59,7 +59,7 @@ export default function Header({ userPlan = null }) {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent">
+                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent text-shimmer">
                             UX Kit Express
                         </span>
                     </Link>

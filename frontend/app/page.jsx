@@ -70,7 +70,7 @@ export default function Home() {
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
             La suscripción{' '}
-            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent text-shimmer">
+            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent">
               Netflix
             </span>
             <br />
