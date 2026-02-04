@@ -62,6 +62,20 @@ module.exports = {
         'md': 'var(--shadow-md)',
         'lg': 'var(--shadow-lg)',
       },
+      keyframes: {
+        'fade-in-up': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'scale-in': {
+          '0%': { opacity: '0', transform: 'scale(0.98)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        }
+      },
+      animation: {
+        'fade-in-up': 'fade-in-up 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+        'scale-in': 'scale-in 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+      },
     },
   },
   plugins: [],

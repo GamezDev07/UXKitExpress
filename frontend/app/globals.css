@@ -297,6 +297,19 @@
   .bg-gradient-light {
     background: linear-gradient(to bottom, var(--bg-gradient-start), var(--bg-gradient-end));
   }
+
+  /* Animation Utilities */
+  .animate-enter {
+    @apply animate-fade-in-up;
+  }
+
+  .hover-card-subtle {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-gray-300 dark:hover:border-slate-600;
+  }
+
+  .btn-press-effect {
+    @apply active:scale-[0.98] transition-transform duration-100;
+  }
 }
 
 /* ===========================
