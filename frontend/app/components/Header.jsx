@@ -55,7 +55,7 @@ export default function Header({ userPlan = null }) {
 
     return (
         <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-50 bg-slate-950/80">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-enter">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
@@ -70,9 +70,9 @@ export default function Header({ userPlan = null }) {
                             <Link
                                 key={link.href}
                                 href={link.href}
-                                className={`transition-colors ${isActive(link.href)
-                                    ? 'text-white font-semibold'
-                                    : 'text-slate-400 hover:text-white'
+                                className={`nav-link ${isActive(link.href)
+                                    ? 'text-white font-semibold after:scale-x-100 after:origin-left'
+                                    : ''
                                     }`}
                             >
                                 {link.label}

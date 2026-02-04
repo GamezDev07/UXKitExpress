@@ -50,7 +50,7 @@ export default function Home() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="min-h-screen bg-gray-50 dark:bg-slate-950 animate-enter">
       <Header />
 
       {/* Build Indicator - Remove after testing */}
@@ -70,7 +70,7 @@ export default function Home() {
 
           <h1 className="text-5xl md:text-7xl font-bold mb-6 text-gray-900 dark:text-white">
             La suscripción{' '}
-            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent text-shimmer">
               Netflix
             </span>
             <br />
@@ -103,7 +103,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="grid md:grid-cols-3 gap-8">
-          <div className="text-center transition-transform duration-300 hover:scale-105">
+          <div className="text-center transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <Zap className="w-6 h-6" />
             </div>
@@ -113,7 +113,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="text-center transition-transform duration-300 hover:scale-105">
+          <div className="text-center transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <Users className="w-6 h-6" />
             </div>
@@ -123,7 +123,7 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="text-center transition-transform duration-300 hover:scale-105">
+          <div className="text-center transition-all duration-300 ease-out hover:scale-[1.02] hover:-translate-y-1">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg mb-4 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
               <Shield className="w-6 h-6" />
             </div>
@@ -150,7 +150,7 @@ export default function Home() {
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`card transition-all duration-300 hover:scale-105 ${plan.popular ? 'shadow-glow relative' : ''
+              className={`card hover-card-subtle ${plan.popular ? 'shadow-glow relative' : ''
                 }`}
             >
               {plan.popular && (

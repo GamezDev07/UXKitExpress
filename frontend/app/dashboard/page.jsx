@@ -184,7 +184,7 @@ export default function DashboardPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
+        <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200 animate-enter">
             <Header userPlan={currentPlan} />
 
             {/* Welcome Message Toast */}
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                             return (
                                 <div
                                     key={component.id}
-                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover:border-gray-300 dark:hover:border-white/20 transition-all duration-300 hover:-translate-y-1"
+                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle"
                                 >
                                     <div className="relative aspect-[4/3] bg-gray-200 dark:bg-slate-800 overflow-hidden">
                                         <img

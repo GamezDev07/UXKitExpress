@@ -304,11 +304,45 @@
   }
 
   .hover-card-subtle {
-    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-gray-300 dark:hover:border-slate-600;
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-black/50 hover:border-gray-300 dark:hover:border-slate-600 hover:scale-[1.01];
   }
 
   .btn-press-effect {
     @apply active:scale-[0.98] transition-transform duration-100;
+  }
+
+  /* Premium Sheen Effect */
+  .text-shimmer {
+    @apply bg-clip-text text-transparent bg-[length:200%_auto] animate-shimmer;
+    background-image: linear-gradient(120deg,
+        transparent 0%,
+        transparent 40%,
+        rgba(255, 255, 255, 0.6) 50%,
+        transparent 60%,
+        transparent 100%);
+  }
+
+  .dark .text-shimmer {
+    background-image: linear-gradient(120deg,
+        transparent 0%,
+        transparent 40%,
+        rgba(255, 255, 255, 0.4) 50%,
+        transparent 60%,
+        transparent 100%);
+  }
+
+  /* Navigation Link Hover */
+  .nav-link {
+    @apply relative text-slate-400 hover:text-white transition-colors duration-200;
+  }
+
+  .nav-link::after {
+    content: '';
+    @apply absolute left-0 bottom-0 w-full h-[1px] bg-white scale-x-0 transition-transform duration-300 ease-out origin-right;
+  }
+
+  .nav-link:hover::after {
+    @apply scale-x-100 origin-left;
   }
 }
 
