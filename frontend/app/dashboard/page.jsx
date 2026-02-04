@@ -185,7 +185,7 @@ export default function DashboardPage() {
 
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200 animate-enter">
-            <Header userPlan={currentPlan} />
+            <Header userPlan={currentPlan} subscriptionInterval={userData?.subscription_interval} />
 
             {/* Welcome Message Toast */}
             <WelcomeToast
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                                     onClick={() => setSelectedCategory(category.id)}
                                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${isActive
                                         ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white'
-                                        : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-gray-900 dark:hover:text-white hover:border-gray-400 dark:hover:border-white/20'
+                                        : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-white hover:border-transparent hover:bg-gradient-to-r hover:from-red-600 hover:via-red-500 hover:to-orange-500 dark:hover:from-blue-500 dark:hover:to-violet-500'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />

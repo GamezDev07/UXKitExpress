@@ -296,7 +296,7 @@
 
   .animate-shine {
     background-size: 200% auto;
-    animation: shine 3s linear infinite;
+    animation: shine 6s linear infinite;
   }
 
   .animate-fade-in {

@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
-export default function Header({ userPlan = null }) {
+export default function Header({ userPlan = null, subscriptionInterval = null }) {
     const pathname = usePathname()
     const router = useRouter()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -82,20 +82,20 @@ export default function Header({ userPlan = null }) {
                         {/* User Plan Badge - Only show if user is logged in */}
                         {user && userPlan && (
                             <div className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full animate-shine">
-                                Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
+                                Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)} {subscriptionInterval ? (subscriptionInterval === 'monthly' ? 'Monthly' : 'Annual') : ''}
                             </div>
                         )}
 
                         {/* Theme Toggle */}
                         <button
                             onClick={toggleTheme}
-                            className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all"
+                            className="p-2 text-gray-300 hover:text-white rounded-lg transition-all hover:bg-gradient-to-r hover:from-red-600 hover:via-red-500 hover:to-orange-500 dark:hover:from-blue-500 dark:hover:to-violet-500"
                             aria-label="Toggle theme"
                         >
                             {isDark ? (
-                                <Sun className="w-5 h-5 text-white" />
+                                <Sun className="w-5 h-5" />
                             ) : (
-                                <Moon className="w-5 h-5 text-white" />
+                                <Moon className="w-5 h-5" />
                             )}
                         </button>
 
@@ -118,7 +118,7 @@ export default function Header({ userPlan = null }) {
                                 </button>
                                 <button
                                     onClick={() => setShowLogoutModal(true)}
-                                    className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
+                                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white rounded-lg transition-all hover:bg-gradient-to-r hover:from-red-600 hover:via-red-500 hover:to-orange-500 dark:hover:from-blue-500 dark:hover:to-violet-500"
                                 >
                                     <LogOut className="w-4 h-4" />
                                     <span className="text-sm">Salir</span>
