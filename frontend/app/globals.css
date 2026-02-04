@@ -304,7 +304,7 @@
   }
 
   .hover-card-subtle {
-    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:shadow-gray-200/50 dark:hover:shadow-black/50 hover:border-gray-300 dark:hover:border-slate-600 hover:scale-[1.01];
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-gray-300 dark:hover:border-slate-600 hover:scale-[1.01];
   }
 
   .btn-press-effect {

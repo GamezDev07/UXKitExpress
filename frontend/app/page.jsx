@@ -150,7 +150,7 @@ export default function Home() {
           {plans.map((plan, index) => (
             <div
               key={index}
-              className={`card hover-card-subtle ${plan.popular ? 'shadow-glow relative' : ''
+              className={`card hover-card-subtle hover:shadow-gray-200/50 dark:hover:shadow-black/50 ${plan.popular ? 'shadow-glow relative' : ''
                 }`}
             >
               {plan.popular && (
