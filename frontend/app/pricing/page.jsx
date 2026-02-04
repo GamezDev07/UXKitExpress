@@ -180,7 +180,7 @@ export default function PricingPage() {
                     {plans.map((plan) => {
                         const Icon = plan.icon
                         return (
-                            <div key={plan.id} className={`relative bg-white dark:bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col hover-card-subtle hover:shadow-gray-200/50 dark:hover:shadow-black/50 ${plan.highlighted ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}>
+                            <div key={plan.id} className={`relative bg-white dark:bg-slate-900/50 border backdrop-blur rounded-2xl p-6 flex flex-col hover-card-subtle shadow-glow hover:shadow-gray-200/50 dark:hover:shadow-black/50 ${plan.highlighted ? 'ring-2 ring-blue-500/50 border-blue-500/50' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}>
                                 {plan.badge && <div className="absolute -top-4 left-1/2 -translate-x-1/2"><span className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full">{plan.badge}</span></div>}
                                 <div className="mb-4"><div className={`inline-flex p-3 rounded-lg ${plan.highlighted ? 'bg-gradient-to-br from-blue-500/20 to-violet-500/20' : 'bg-gray-100 dark:bg-white/5'}`}><Icon className={`w-6 h-6 ${plan.highlighted ? 'text-blue-400' : 'text-gray-600 dark:text-slate-400'}`} /></div></div>
                                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{plan.name}</h3>

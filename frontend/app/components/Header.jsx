@@ -59,7 +59,7 @@ export default function Header({ userPlan = null }) {
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent text-shimmer">
+                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent animate-shine">
                             UX Kit Express
                         </span>
                     </Link>
@@ -81,7 +81,7 @@ export default function Header({ userPlan = null }) {
 
                         {/* User Plan Badge - Only show if user is logged in */}
                         {user && userPlan && (
-                            <div className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full">
+                            <div className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full animate-shine">
                                 Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
                             </div>
                         )}

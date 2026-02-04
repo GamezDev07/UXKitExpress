@@ -257,7 +257,7 @@ export default function DashboardPage() {
                             return (
                                 <div
                                     key={component.id}
-                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle hover:shadow-gray-200/50 dark:hover:shadow-black/50"
+                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow hover:shadow-gray-200/50 dark:hover:shadow-black/50"
                                 >
                                     <div className="relative aspect-[4/3] bg-gray-200 dark:bg-slate-800 overflow-hidden">
                                         <img
