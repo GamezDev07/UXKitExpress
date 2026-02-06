@@ -19,6 +19,7 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
     const navLinks = [
         { href: '/dashboard', label: 'Dashboard' },
         { href: '/pricing', label: 'Precios' },
+        { href: '/packs', label: 'Packs' },
         { href: '/contact', label: 'Contacto' }
     ]
 

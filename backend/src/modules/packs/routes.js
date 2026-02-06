@@ -18,6 +18,51 @@ router.get('/', catchAsync(async (req, res) => {
     res.json({ packs });
 }));
 
+// GET /api/packs/:slug - Obtener detalles de un pack
+router.get('/:slug', catchAsync(async (req, res) => {
+    const { slug } = req.params;
+
+    // Obtener pack
+    const { data: pack } = await supabaseAdmin
+        .from('packs')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .single();
+
+    if (!pack) {
+        return res.status(404).json({ error: 'Pack no encontrado' });
+    }
+
+    // Verificar si el usuario autenticado ya lo compró (opcional)
+    let hasPurchased = false;
+    const authHeader = req.headers.authorization;
+
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        try {
+            const token = authHeader.substring(7);
+            // Decodificar token para obtener userId
+            const jwt = await import('jsonwebtoken');
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const userId = decoded.userId || decoded.sub;
+
+            const { data: purchase } = await supabaseAdmin
+                .from('purchases')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('pack_id', pack.id)
+                .single();
+
+            hasPurchased = !!purchase;
+        } catch (error) {
+            // Token inválido o no decodificable - continuar sin estado de compra
+            logger.debug('Could not verify purchase status:', error.message);
+        }
+    }
+
+    res.json({ pack, hasPurchased });
+}));
+
 // POST /api/packs/purchase - Comprar pack
 router.post('/purchase', authenticate, catchAsync(async (req, res) => {
     const userId = req.user.userId || req.user.sub;
