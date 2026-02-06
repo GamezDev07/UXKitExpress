@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import authRoutes from './src/modules/auth/routes.js';
 import billingRoutes from './src/modules/billing/routes.js';
 import contactRoutes from './src/modules/contact/routes.js';
+import packRoutes from './src/modules/packs/routes.js';
 
 // Importar middlewares
 import { errorHandler } from './src/middleware/errorHandler.js';
@@ -88,6 +89,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/packs', packRoutes);
 
 // Rate limiting (applied AFTER routes are registered)
 const generalLimiter = rateLimit({

@@ -254,7 +254,26 @@ router.post('/webhook', async (req, res) => {
   try {
     switch (event.type) {
       case 'checkout.session.completed':
-        await handleCheckoutCompleted(event.data.object);
+        const session = event.data.object;
+
+        // Si es compra de pack
+        if (session.mode === 'payment' && session.metadata?.packId) {
+          const { userId, packId } = session.metadata;
+
+          await supabaseAdmin.from('purchases').insert({
+            user_id: userId,
+            pack_id: packId,
+            amount_paid: session.amount_total / 100,
+            stripe_payment_id: session.payment_intent,
+            stripe_session_id: session.id
+          });
+
+          logger.info(`Pack purchased: ${packId} by ${userId}`);
+        }
+        // Si es subscription (código existente)
+        else if (session.mode === 'subscription') {
+          await handleCheckoutCompleted(session);
+        }
         break;
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event.data.object);
