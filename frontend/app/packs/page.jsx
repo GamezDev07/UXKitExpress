@@ -49,10 +49,10 @@ export default function PacksPage() {
             <section className="py-16 px-4 border-b border-gray-200 dark:border-white/10">
                 <div className="max-w-7xl mx-auto text-center">
                     <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white">
-                        Component Packs
+                        Paquetes de Componentes
                     </h1>
                     <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                        Production-ready components and templates. Buy once, use forever.
+                        Componentes y templates listos para producción. Compra una vez, úsalos para siempre.
                     </p>
                 </div>
             </section>
@@ -64,10 +64,10 @@ export default function PacksPage() {
                         <div className="text-center py-20">
                             <Package className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
                             <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                No packs available yet
+                                Aún no hay packs disponibles
                             </h3>
                             <p className="text-gray-600 dark:text-gray-400">
-                                We're working on amazing packs. Check back soon!
+                                Estamos trabajando en packs increíbles. ¡Vuelve pronto!
                             </p>
                         </div>
                     ) : (
@@ -111,7 +111,7 @@ export default function PacksPage() {
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <Package className="w-4 h-4" />
-                                                {pack.components_count || 15} components
+                                                {pack.components_count || 15} componentes
                                             </div>
                                         </div>
 
@@ -122,7 +122,7 @@ export default function PacksPage() {
                                                     ${pack.price}
                                                 </span>
                                                 <span className="text-gray-600 dark:text-gray-400 ml-1">
-                                                    one-time
+                                                    pago único
                                                 </span>
                                             </div>
                                             <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />

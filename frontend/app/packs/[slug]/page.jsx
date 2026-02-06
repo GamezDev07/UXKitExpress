@@ -60,7 +60,6 @@ export default function PackDetailPage() {
             const data = await res.json()
 
             if (data.url) {
-                // Redirect a Stripe Checkout
                 window.location.href = data.url
             } else if (data.error) {
                 alert(data.error)
@@ -103,7 +102,7 @@ export default function PackDetailPage() {
                     className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white mb-8 transition-colors"
                 >
                     <ArrowLeft className="w-4 h-4" />
-                    Back to packs
+                    Volver a packs
                 </button>
 
                 <div className="grid lg:grid-cols-3 gap-8">
@@ -131,43 +130,43 @@ export default function PackDetailPage() {
                         {/* What's Included */}
                         <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl p-8">
                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                                What's Included
+                                Qué Incluye
                             </h2>
                             <ul className="space-y-3">
                                 <li className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        {pack.components_count || 15} production-ready components
+                                        {pack.components_count || 15} componentes listos para producción
                                     </span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        3 complete dashboard templates
+                                        3 plantillas de dashboard completas
                                     </span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        React + Tailwind CSS code
+                                        Código React + Tailwind CSS
                                     </span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        Figma design file included
+                                        Archivo de diseño Figma incluido
                                     </span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        Light & Dark mode support
+                                        Soporte de modo claro y oscuro
                                     </span>
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        Lifetime updates & support
+                                        Actualizaciones y soporte de por vida
                                     </span>
                                 </li>
                             </ul>
@@ -183,11 +182,11 @@ export default function PackDetailPage() {
                                         ${pack.price}
                                     </span>
                                     <span className="text-gray-600 dark:text-gray-400">
-                                        one-time
+                                        pago único
                                     </span>
                                 </div>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    Buy once, own forever
+                                    Compra una vez, es tuyo para siempre
                                 </p>
                             </div>
 
@@ -197,7 +196,7 @@ export default function PackDetailPage() {
                                     className="w-full btn-primary mb-4"
                                 >
                                     <Download className="w-5 h-5" />
-                                    Download Pack
+                                    Descargar Pack
                                 </button>
                             ) : (
                                 <button
@@ -208,29 +207,29 @@ export default function PackDetailPage() {
                                     {purchasing ? (
                                         <>
                                             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                                            Processing...
+                                            Procesando...
                                         </>
                                     ) : (
                                         <>
                                             <ExternalLink className="w-5 h-5" />
-                                            Buy Now
+                                            Comprar Ahora
                                         </>
                                     )}
                                 </button>
                             )}
 
                             <div className="text-center text-sm text-gray-600 dark:text-gray-400 mb-6">
-                                Secure checkout via Stripe
+                                Pago seguro vía Stripe
                             </div>
 
                             {/* Stats */}
                             <div className="pt-6 border-t border-gray-200 dark:border-white/10">
                                 <div className="flex items-center justify-between mb-3">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Downloads</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Descargas</span>
                                     <span className="font-semibold text-gray-900 dark:text-white">{pack.downloads}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">Purchases</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-400">Compras</span>
                                     <span className="font-semibold text-gray-900 dark:text-white">{pack.purchases}</span>
                                 </div>
                             </div>
