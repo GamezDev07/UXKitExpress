@@ -63,10 +63,30 @@ router.get('/:slug', catchAsync(async (req, res) => {
     res.json({ pack, hasPurchased });
 }));
 
+
 // POST /api/packs/purchase - Comprar pack
 router.post('/purchase', authenticate, catchAsync(async (req, res) => {
-    const userId = req.user.userId || req.user.sub;
+    // Normalizar userId (puede venir como userId, sub, o id)
+    const userId = req.user.userId || req.user.sub || req.user.id;
     const { packId } = req.body;
+
+    console.log('=== PACK PURCHASE REQUEST ===');
+    console.log('User object:', req.user);
+    console.log('User ID extracted:', userId);
+    console.log('Pack ID:', packId);
+    console.log('Authorization header:', req.headers.authorization?.substring(0, 30) + '...');
+
+    if (!userId) {
+        console.error('❌ No user ID found in token');
+        return res.status(401).json({
+            error: 'Token inválido. Por favor inicia sesión de nuevo.'
+        });
+    }
+
+    if (!packId) {
+        console.error('❌ No pack ID provided');
+        return res.status(400).json({ error: 'Pack ID requerido' });
+    }
 
     // Verificar pack
     const { data: pack } = await supabaseAdmin

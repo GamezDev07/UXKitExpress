@@ -1,48 +1,66 @@
 import jwt from 'jsonwebtoken';
-import { AppError } from './errorHandler.js';
+import logger from '../utils/logger.js';
 
-export const authenticate = (req, res, next) => {
+export function authenticate(req, res, next) {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    
-    if (!token) {
-      throw new AppError('Acceso no autorizado. Token no proporcionado.', 401);
+    // Obtener token del header Authorization
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      logger.warn('No authorization header found');
+      return res.status(401).json({
+        status: 'error',
+        message: 'No autenticado. Por favor inicia sesión.'
+      });
     }
-    
+
+    const token = authHeader.split(' ')[1];
+
+    if (!token) {
+      logger.warn('No token provided');
+      return res.status(401).json({
+        status: 'error',
+        message: 'Token no proporcionado'
+      });
+    }
+
+    // Verificar token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    // El token puede tener diferentes estructuras dependiendo de cuándo se creó
+    // Normalizar la estructura del usuario
+    req.user = {
+      userId: decoded.userId || decoded.sub || decoded.id,
+      email: decoded.email,
+      plan: decoded.plan || decoded.current_plan,
+      sub: decoded.userId || decoded.sub || decoded.id, // Para compatibilidad
+      id: decoded.userId || decoded.sub || decoded.id
+    };
+
+    logger.debug(`User authenticated: ${req.user.userId}`);
     next();
-    
+
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
-      return next(new AppError('Token inválido', 401));
+      logger.error('Invalid token:', error.message);
+      return res.status(401).json({
+        status: 'error',
+        message: 'Token inválido'
+      });
     }
-    if (error.name === 'TokenExpiredError') {
-      return next(new AppError('Token expirado', 401));
-    }
-    next(error);
-  }
-};
 
-// Middleware para verificar plan
-export const requirePlan = (requiredPlan) => {
-  return (req, res, next) => {
-    const userPlan = req.user?.plan || 'free';
-    const planHierarchy = {
-      'free': 0,
-      'basic': 1,
-      'advance': 2,
-      'pro': 3,
-      'enterprise': 4
-    };
-    
-    if (planHierarchy[userPlan] >= planHierarchy[requiredPlan]) {
-      next();
-    } else {
-      next(new AppError(
-        `Esta función requiere el plan ${requiredPlan} o superior`,
-        403
-      ));
+    if (error.name === 'TokenExpiredError') {
+      logger.error('Token expired');
+      return res.status(401).json({
+        status: 'error',
+        message: 'Token expirado. Por favor inicia sesión de nuevo.'
+      });
     }
-  };
-};
+
+    logger.error('Authentication error:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: 'Error al verificar autenticación'
+    });
+  }
+}
