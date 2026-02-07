@@ -13,10 +13,8 @@ const router = express.Router();
 router.post('/register', catchAsync(async (req, res) => {
   console.log('=== REGISTER REQUEST RECEIVED ===');
   console.log('Body:', { ...req.body, password: '***' });
-  console.log('Headers:', req.headers);
 
   try {
-    // Validar datos de entrada (incluyendo sessionId opcional)
     const { email, password, fullName, sessionId } = req.body;
 
     if (!email || !password || !fullName) {
@@ -37,22 +35,10 @@ router.post('/register', catchAsync(async (req, res) => {
         const stripe = (await import('stripe')).default(process.env.STRIPE_SECRET_KEY);
         const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-        console.log('Stripe session retrieved:', {
-          id: session.id,
-          payment_status: session.payment_status,
-          customer: session.customer,
-          subscription: session.subscription
-        });
-
         if (session.payment_status !== 'paid') {
-          console.error('Payment not completed for session:', sessionId);
-          return res.status(400).json({
-            error: 'Pago no completado',
-            payment_status: session.payment_status
-          });
+          return res.status(400).json({ error: 'Pago no completado' });
         }
 
-        // Extraer datos del plan desde metadata
         planData.plan = session.metadata?.plan || 'basic';
         planData.interval = session.metadata?.interval || 'monthly';
         stripeCustomerId = session.customer;
@@ -61,20 +47,22 @@ router.post('/register', catchAsync(async (req, res) => {
         console.log('Payment validated successfully:', planData);
       } catch (stripeError) {
         console.error('Error validating Stripe session:', stripeError);
-        return res.status(400).json({
-          error: 'Error al validar sesión de pago',
-          details: stripeError.message
-        });
+        return res.status(400).json({ error: 'Error al validar sesión de pago' });
       }
     }
 
-    // 2. CREAR USUARIO EN SUPABASE AUTH (usando Admin API)
+    // 2. ✅ HASHEAR CONTRASEÑA MANUALMENTE
+    console.log('Hashing password...');
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log('Password hashed successfully');
+
+    // 3. CREAR USUARIO EN SUPABASE AUTH
     console.log('Creating user in Supabase Auth...');
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      email_confirm: true, // Auto-confirmar email
+      email_confirm: true,
       user_metadata: {
         full_name: fullName
       }
@@ -83,50 +71,44 @@ router.post('/register', catchAsync(async (req, res) => {
     if (authError) {
       console.error('Error creating auth user:', authError);
 
-      // Manejar usuario duplicado
       if (authError.message?.includes('already') || authError.code === '23505') {
         return res.status(400).json({ error: 'El usuario ya existe' });
       }
 
-      return res.status(500).json({
-        error: 'Error al crear usuario',
-        details: authError.message
-      });
+      return res.status(500).json({ error: 'Error al crear usuario' });
     }
 
     console.log('Auth user created:', authData.user.id);
 
-    // 3. CREAR/ACTUALIZAR REGISTRO EN TABLA USERS
-    console.log('Upserting user in public.users table...');
+    // 4. ✅ GUARDAR EN TABLA USERS CON PASSWORD_HASH
+    console.log('Inserting user in public.users table...');
 
     const { error: dbError } = await supabaseAdmin
       .from('users')
-      .upsert({
+      .insert({
         id: authData.user.id,
         email,
+        password_hash: passwordHash, // ✅ AQUÍ ESTÁ EL FIX
         full_name: fullName,
         current_plan: planData.plan || 'free',
-        subscription_status: 'active', // ✅ Siempre 'active' - el plan se maneja en current_plan
+        subscription_status: 'active',
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: stripeSubscriptionId,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'id'
+        subscription_interval: planData.interval
       });
 
     if (dbError) {
-      console.error('Error updating users table:', dbError);
-      // Usuario de auth ya existe, pero tabla users falló
-      // Podríamos intentar eliminar el usuario de auth aquí si es crítico
-      logger.error(`Failed to create user record for ${authData.user.id}: ${dbError.message}`);
-    } else {
-      console.log('User record created/updated successfully');
+      console.error('Error inserting user in users table:', dbError);
+
+      // Si falla, eliminar usuario de auth para mantener consistencia
+      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+
+      return res.status(500).json({ error: 'Error al crear usuario en base de datos' });
     }
 
-    // 4. CREAR TOKEN JWT PARA EL FRONTEND
-    console.log('Generating JWT token...');
+    console.log('User record created successfully with password hash');
 
+    // 5. CREAR TOKEN JWT
     const token = jwt.sign(
       {
         userId: authData.user.id,
@@ -137,36 +119,24 @@ router.post('/register', catchAsync(async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    console.log('JWT generated successfully');
+    console.log('✅ Registration successful for:', email);
     logger.info(`New user registered: ${email} (plan: ${planData.plan})`);
 
-    // 5. RESPUESTA EXITOSA
-    const response = {
+    // 6. RESPUESTA EXITOSA
+    res.status(201).json({
       success: true,
       user: {
         id: authData.user.id,
         email,
         fullName,
-        plan: planData.plan,
-        subscriptionStatus: sessionId ? 'active' : 'free'
+        plan: planData.plan
       },
       token
-    };
-
-    console.log('Sending success response');
-    return res.status(201).json(response);
+    });
 
   } catch (error) {
-    console.error('=== REGISTER ERROR ===');
-    console.error('Error:', error);
-    console.error('Error message:', error.message);
-    console.error('Stack:', error.stack);
-
-    return res.status(500).json({
-      error: 'Error en el registro',
-      message: error.message,
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
-    });
+    console.error('=== REGISTER ERROR ===', error);
+    res.status(500).json({ error: 'Error en el registro' });
   }
 }));
 
@@ -174,11 +144,13 @@ router.post('/register', catchAsync(async (req, res) => {
 router.post('/login', catchAsync(async (req, res) => {
   console.log('=== LOGIN REQUEST RECEIVED ===');
   console.log('Body:', { email: req.body.email, password: '***' });
-  console.log('Origin:', req.headers.origin);
 
   try {
-    const { email, password } = userSchemas.login.parse(req.body);
-    console.log('Validation passed for email:', email);
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email y contraseña requeridos' });
+    }
 
     // Obtener usuario
     console.log('Fetching user from database...');
@@ -194,60 +166,53 @@ router.post('/login', catchAsync(async (req, res) => {
     }
 
     console.log('User found:', user.id);
+    console.log('Password hash exists:', !!user.password_hash);
+    console.log('Password hash length:', user.password_hash?.length);
+
+    // ✅ VERIFICAR QUE EXISTE PASSWORD_HASH
+    if (!user.password_hash) {
+      console.error('❌ No password_hash for user:', email);
+      return res.status(401).json({
+        error: 'Usuario creado con método antiguo. Por favor contacta a soporte.'
+      });
+    }
 
     // Verificar contraseña
     console.log('Verifying password...');
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
 
+    console.log('bcrypt.compare result:', isValidPassword);
+
     if (!isValidPassword) {
-      console.log('Invalid password for user:', email);
+      console.log('❌ Invalid password for user:', email);
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    console.log('Password verified successfully');
+    console.log('✅ Password valid for user:', email);
 
     // Crear token JWT
-    console.log('Generating JWT token...');
     const token = jwt.sign(
       { userId: user.id, email: user.email, plan: user.current_plan },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    console.log('JWT generated successfully');
+    console.log('✅ Token generated for user:', email);
     logger.info(`Usuario inició sesión: ${email}`);
 
-    const response = {
+    res.json({
       user: {
         id: user.id,
         email: user.email,
         fullName: user.full_name,
-        plan: user.current_plan,
-        subscriptionStatus: user.subscription_status
+        plan: user.current_plan
       },
       token
-    };
-
-    console.log('Sending login success response');
-    return res.json(response);
+    });
 
   } catch (error) {
-    console.error('=== LOGIN ERROR ===');
-    console.error('Error:', error);
-    console.error('Error message:', error.message);
-    console.error('Stack:', error.stack);
-
-    if (error.name === 'ZodError') {
-      return res.status(400).json({
-        error: 'Datos de login inválidos',
-        details: error.errors
-      });
-    }
-
-    return res.status(500).json({
-      error: 'Error en el inicio de sesión',
-      message: error.message
-    });
+    console.error('=== LOGIN ERROR ===', error);
+    res.status(500).json({ error: 'Error en el inicio de sesión' });
   }
 }));
 
