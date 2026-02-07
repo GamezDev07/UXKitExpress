@@ -23,7 +23,19 @@ router.post('/register', catchAsync(async (req, res) => {
 
     console.log('Validation passed for email:', email);
 
-    // 1. VALIDAR PAGO DE STRIPE (si viene sessionId)
+    // 1. ✅ VERIFICAR SI EL USUARIO YA EXISTE (ANTES de crear en Auth)
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('id, email')
+      .eq('email', email)
+      .single();
+
+    if (existingUser) {
+      console.log('User already exists:', email);
+      return res.status(400).json({ error: 'El usuario ya existe' });
+    }
+
+    // 2. VALIDAR PAGO DE STRIPE (si viene sessionId)
     let planData = { plan: 'free', interval: 'monthly' };
     let stripeCustomerId = null;
     let stripeSubscriptionId = null;
@@ -51,12 +63,12 @@ router.post('/register', catchAsync(async (req, res) => {
       }
     }
 
-    // 2. ✅ HASHEAR CONTRASEÑA MANUALMENTE
+    // 3. HASHEAR CONTRASEÑA
     console.log('Hashing password...');
     const passwordHash = await bcrypt.hash(password, 10);
     console.log('Password hashed successfully');
 
-    // 3. CREAR USUARIO EN SUPABASE AUTH
+    // 4. CREAR USUARIO EN SUPABASE AUTH
     console.log('Creating user in Supabase Auth...');
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -80,7 +92,7 @@ router.post('/register', catchAsync(async (req, res) => {
 
     console.log('Auth user created:', authData.user.id);
 
-    // 4. ✅ GUARDAR EN TABLA USERS CON PASSWORD_HASH
+    // 5. ✅ GUARDAR EN TABLA USERS (con manejo de duplicados)
     console.log('Inserting user in public.users table...');
 
     const { error: dbError } = await supabaseAdmin
@@ -100,15 +112,25 @@ router.post('/register', catchAsync(async (req, res) => {
     if (dbError) {
       console.error('Error inserting user in users table:', dbError);
 
-      // Si falla, eliminar usuario de auth para mantener consistencia
-      await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+      // ✅ SI FALLA, ELIMINAR USUARIO DE AUTH (rollback)
+      console.log('Rolling back: deleting user from auth...');
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        console.log('User deleted from auth successfully');
+      } catch (deleteError) {
+        console.error('Error deleting user from auth:', deleteError);
+      }
+
+      if (dbError.code === '23505') {
+        return res.status(400).json({ error: 'El usuario ya existe' });
+      }
 
       return res.status(500).json({ error: 'Error al crear usuario en base de datos' });
     }
 
-    console.log('User record created successfully with password hash');
+    console.log('✅ User record created successfully with password hash');
 
-    // 5. CREAR TOKEN JWT
+    // 6. CREAR TOKEN JWT
     const token = jwt.sign(
       {
         userId: authData.user.id,
@@ -122,7 +144,7 @@ router.post('/register', catchAsync(async (req, res) => {
     console.log('✅ Registration successful for:', email);
     logger.info(`New user registered: ${email} (plan: ${planData.plan})`);
 
-    // 6. RESPUESTA EXITOSA
+    // 7. RESPUESTA EXITOSA
     res.status(201).json({
       success: true,
       user: {
@@ -136,7 +158,7 @@ router.post('/register', catchAsync(async (req, res) => {
 
   } catch (error) {
     console.error('=== REGISTER ERROR ===', error);
-    res.status(500).json({ error: 'Error en el registro' });
+    res.status(500).json({ error: 'Error en el registro', details: error.message });
   }
 }));
 
