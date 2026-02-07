@@ -1,9 +1,9 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Cliente Supabase Singleton
+// Cliente Supabase (solo para queries a DB, NO para auth)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -20,86 +20,132 @@ export const useAuth = () => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [userPlan, setUserPlan] = useState('free')
-  const [token, setToken] = useState(null) // Nuevo estado para el Token
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // 1. Carga inicial
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      handleSession(session)
-      setLoading(false)
-    })
+    // Cargar usuario desde localStorage al montar
+    const token = localStorage.getItem('token')
+    const userData = localStorage.getItem('userData')
 
-    // 2. Escuchar cambios (Login, Logout, Token Refresh)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      handleSession(session)
-    })
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData)
+        setUser(parsedUser)
+        setUserPlan(parsedUser.plan || 'free')
+        console.log('✅ Usuario cargado desde localStorage:', parsedUser)
+      } catch (error) {
+        console.error('Error parsing userData:', error)
+        localStorage.removeItem('token')
+        localStorage.removeItem('userData')
+      }
+    }
 
-    return () => subscription.unsubscribe()
+    setLoading(false)
   }, [])
 
-  // Helper para centralizar la lógica de sesión
-  const handleSession = (session) => {
-    setUser(session?.user ?? null)
-    setToken(session?.access_token ?? null) // Guardar token
-
-    if (session?.user) {
-      fetchUserPlan(session.user.id)
-    } else {
-      setUserPlan('free')
-    }
-  }
-
-  const fetchUserPlan = async (userId) => {
+  // LOGIN con backend custom
+  const signIn = async (email, password) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('current_plan')
-        .eq('id', userId)
-        .single()
+      console.log('🔐 Iniciando login custom...')
 
-      if (!error && data) {
-        setUserPlan(data.current_plan)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al iniciar sesión')
+      }
+
+      console.log('📦 Respuesta del backend:', data)
+
+      // GUARDAR TOKEN Y USUARIO
+      if (data.token && data.user) {
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('userData', JSON.stringify(data.user))
+
+        setUser(data.user)
+        setUserPlan(data.user.plan || 'free')
+
+        console.log('✅ Token guardado:', data.token.substring(0, 30) + '...')
+        console.log('✅ Usuario:', data.user)
+
+        return { user: data.user, session: { access_token: data.token } }
+      } else {
+        throw new Error('No se recibió token del servidor')
       }
     } catch (error) {
-      console.error('Error fetching plan:', error)
+      console.error('❌ Login error:', error)
+      throw error
     }
   }
 
-  const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) throw error
-    return data
-  }
+  // SIGNUP con backend custom
+  const signUp = async (email, password, fullName, sessionId = null) => {
+    try {
+      console.log('📝 Iniciando registro custom...')
 
-  const signUp = async (email, password, fullName) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName }
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          sessionId
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error al registrarse')
       }
-    })
-    if (error) throw error
-    return data
+
+      // GUARDAR TOKEN Y USUARIO
+      if (data.token && data.user) {
+        localStorage.setItem('token', data.token)
+        localStorage.setItem('userData', JSON.stringify(data.user))
+
+        setUser(data.user)
+        setUserPlan(data.user.plan || 'free')
+
+        console.log('✅ Registro exitoso, token guardado')
+
+        return { user: data.user, session: { access_token: data.token } }
+      } else {
+        throw new Error('No se recibió token del servidor')
+      }
+    } catch (error) {
+      console.error('❌ Signup error:', error)
+      throw error
+    }
   }
 
+  // LOGOUT
   const signOut = async () => {
-    await supabase.auth.signOut()
+    localStorage.removeItem('token')
+    localStorage.removeItem('userData')
     setUser(null)
-    setToken(null)
     setUserPlan('free')
+    console.log('👋 Sesión cerrada')
   }
 
   const value = {
     user,
     userPlan,
-    token, // Token expuesto para llamadas al Backend
     loading,
     signIn,
     signUp,
     signOut,
-    supabase
+    supabase // Mantener para queries a DB
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
