@@ -86,12 +86,12 @@ router.post('/register', catchAsync(async (req, res) => {
 
     console.log('✅ Auth user created:', authData.user.id);
 
-    // 4. GUARDAR EN TABLA USERS
-    console.log('Inserting user in public.users table...');
+    // 4. GUARDAR EN TABLA USERS (CON UPSERT)
+    console.log('Upserting user in public.users table...');
 
     const { error: dbError } = await supabaseAdmin
       .from('users')
-      .insert({
+      .upsert({
         id: authData.user.id,
         email,
         password_hash: passwordHash,
@@ -100,11 +100,14 @@ router.post('/register', catchAsync(async (req, res) => {
         subscription_status: 'active',
         stripe_customer_id: stripeCustomerId,
         stripe_subscription_id: stripeSubscriptionId,
-        subscription_interval: planData.interval
+        subscription_interval: planData.interval,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'id'
       });
 
     if (dbError) {
-      console.error('❌ Error inserting user in users table:', dbError);
+      console.error('❌ Error upserting user in users table:', dbError);
       console.error('DB Error code:', dbError.code);
       console.error('DB Error details:', dbError.details);
 
@@ -117,16 +120,10 @@ router.post('/register', catchAsync(async (req, res) => {
         console.error('❌ Error deleting user from auth:', deleteError);
       }
 
-      // Si es duplicado, mensaje específico
-      if (dbError.code === '23505') {
-        console.log('Duplicate key in users table');
-        return res.status(400).json({ error: 'Este correo ya está registrado' });
-      }
-
       return res.status(500).json({ error: 'Error al crear usuario en base de datos' });
     }
 
-    console.log('✅ User record created successfully with password hash');
+    console.log('✅ User record upserted successfully with password hash');
 
     // 5. CREAR TOKEN JWT
     const token = jwt.sign(
