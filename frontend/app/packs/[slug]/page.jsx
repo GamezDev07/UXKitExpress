@@ -19,24 +19,42 @@ export default function PackDetailPage() {
     useEffect(() => {
         async function loadPack() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packs/${slug}`)
-                const data = await res.json()
+                // ✅ OBTENER TOKEN
+                const token = localStorage.getItem('token');
+
+                // ✅ AGREGAR HEADERS SI HAY TOKEN
+                const headers = {
+                    'Content-Type': 'application/json'
+                };
+
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packs/${slug}`, {
+                    headers  // ← AGREGAR HEADERS
+                });
+
+                const data = await res.json();
+
+                console.log('Pack data received:', data);
+                console.log('hasPurchased:', data.hasPurchased);
 
                 if (data.pack) {
-                    setPack(data.pack)
-                    setHasPurchased(data.hasPurchased || false)
+                    setPack(data.pack);
+                    setHasPurchased(data.hasPurchased || false);
                 } else {
-                    router.push('/packs')
+                    router.push('/packs');
                 }
             } catch (error) {
-                console.error('Error loading pack:', error)
-                router.push('/packs')
+                console.error('Error loading pack:', error);
+                router.push('/packs');
             } finally {
-                setLoading(false)
+                setLoading(false);
             }
         }
-        loadPack()
-    }, [slug, router])
+        loadPack();
+    }, [slug, router]);
 
     async function handlePurchase() {
         if (!user) {
