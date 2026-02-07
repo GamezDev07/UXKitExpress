@@ -3,21 +3,54 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Package, Download, Star, ArrowRight } from 'lucide-react'
+import { Package, Download, Star, ArrowRight, CheckCircle } from 'lucide-react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 
 export default function PacksPage() {
     const [packs, setPacks] = useState([])
+    const [purchasedPacks, setPurchasedPacks] = useState(new Set())
     const [loading, setLoading] = useState(true)
     const router = useRouter()
 
     useEffect(() => {
         async function loadPacks() {
             try {
+                const token = localStorage.getItem('token')
+
+                // Cargar lista de packs
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packs`)
                 const data = await res.json()
                 setPacks(data.packs || [])
+
+                // Si hay token, verificar qué packs compró
+                if (token) {
+                    const purchasedSet = new Set()
+
+                    // Verificar cada pack (en paralelo para ser más rápido)
+                    await Promise.all(
+                        (data.packs || []).map(async (pack) => {
+                            try {
+                                const packRes = await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/api/packs/${pack.slug}`,
+                                    {
+                                        headers: {
+                                            'Authorization': `Bearer ${token}`
+                                        }
+                                    }
+                                )
+                                const packData = await packRes.json()
+                                if (packData.hasPurchased) {
+                                    purchasedSet.add(pack.id)
+                                }
+                            } catch (err) {
+                                console.error('Error checking pack:', pack.slug, err)
+                            }
+                        })
+                    )
+
+                    setPurchasedPacks(purchasedSet)
+                }
             } catch (error) {
                 console.error('Error loading packs:', error)
             } finally {
@@ -72,64 +105,93 @@ export default function PacksPage() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                            {packs.map((pack) => (
-                                <Link
-                                    key={pack.id}
-                                    href={`/packs/${pack.slug}`}
-                                    className="group bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow transition-all duration-300"
-                                >
-                                    {/* Thumbnail */}
-                                    <div className="relative aspect-video bg-gradient-to-br from-blue-500 to-violet-500 dark:from-blue-600 dark:to-violet-600">
-                                        {pack.thumbnail_url ? (
-                                            <img
-                                                src={pack.thumbnail_url}
-                                                alt={pack.name}
-                                                className="w-full h-full object-cover"
-                                            />
-                                        ) : (
-                                            <div className="absolute inset-0 flex items-center justify-center">
-                                                <Package className="w-16 h-16 text-white/50" />
+                            {packs.map((pack) => {
+                                const isPurchased = purchasedPacks.has(pack.id)
+
+                                return (
+                                    <div
+                                        key={pack.id}
+                                        className="group bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow transition-all duration-300 relative"
+                                    >
+                                        {/* Badge "Comprado" */}
+                                        {isPurchased && (
+                                            <div className="absolute top-4 right-4 z-10">
+                                                <div className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Comprado
+                                                </div>
                                             </div>
                                         )}
-                                    </div>
 
-                                    {/* Content */}
-                                    <div className="p-6">
-                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors">
-                                            {pack.name}
-                                        </h3>
-
-                                        <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                                            {pack.description || pack.short_description}
-                                        </p>
-
-                                        {/* Stats */}
-                                        <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
-                                            <div className="flex items-center gap-1">
-                                                <Download className="w-4 h-4" />
-                                                {pack.downloads}
+                                        {/* Thumbnail */}
+                                        <Link href={`/packs/${pack.slug}`}>
+                                            <div className="relative aspect-video bg-gradient-to-br from-blue-500 to-violet-500 dark:from-blue-600 dark:to-violet-600 cursor-pointer">
+                                                {pack.thumbnail_url ? (
+                                                    <img
+                                                        src={pack.thumbnail_url}
+                                                        alt={pack.name}
+                                                        className="w-full h-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="absolute inset-0 flex items-center justify-center">
+                                                        <Package className="w-16 h-16 text-white/50" />
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-1">
-                                                <Package className="w-4 h-4" />
-                                                {pack.components_count || 15} componentes
+                                        </Link>
+
+                                        {/* Content */}
+                                        <div className="p-6">
+                                            <Link href={`/packs/${pack.slug}`}>
+                                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors cursor-pointer">
+                                                    {pack.name}
+                                                </h3>
+                                            </Link>
+
+                                            <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                                                {pack.description || pack.short_description}
+                                            </p>
+
+                                            {/* Stats */}
+                                            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                                <div className="flex items-center gap-1">
+                                                    <Download className="w-4 h-4" />
+                                                    {pack.downloads}
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <Package className="w-4 h-4" />
+                                                    {pack.components_count || 15} componentes
+                                                </div>
                                             </div>
+
+                                            {/* Price + CTA */}
+                                            {isPurchased ? (
+                                                <button
+                                                    onClick={() => router.push(`/download/${pack.id}`)}
+                                                    className="w-full btn-primary flex items-center justify-center gap-2"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                    Descargar Pack
+                                                </button>
+                                            ) : (
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                                                            ${pack.price}
+                                                        </span>
+                                                        <span className="text-gray-600 dark:text-gray-400 ml-1">
+                                                            pago único
+                                                        </span>
+                                                    </div>
+                                                    <Link href={`/packs/${pack.slug}`}>
+                                                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500 group-hover:translate-x-1 transition-all cursor-pointer" />
+                                                    </Link>
+                                                </div>
+                                            )}
                                         </div>
-
-                                        {/* Price + CTA */}
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <span className="text-3xl font-bold text-gray-900 dark:text-white">
-                                                    ${pack.price}
-                                                </span>
-                                                <span className="text-gray-600 dark:text-gray-400 ml-1">
-                                                    pago único
-                                                </span>
-                                            </div>
-                                            <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-blue-600 dark:group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                                        </div>
                                     </div>
-                                </Link>
-                            ))}
+                                )
+                            })}
                         </div>
                     )}
                 </div>
