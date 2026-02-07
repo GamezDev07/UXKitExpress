@@ -234,69 +234,159 @@ router.post('/create-checkout-session', authenticate, catchAsync(async (req, res
 // NOTA: Esta ruta se maneja de forma especial en server.js para usar express.raw()
 router.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
+
   let event;
 
   try {
-    // req.body debe ser el raw body (Buffer) para que esto funcione
-    event = stripe.webhooks.constructEvent(
-      req.body,
-      sig,
-      process.env.STRIPE_WEBHOOK_SECRET
-    );
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
-    logger.error('Webhook signature verification failed:', err.message);
+    console.error('⚠️ Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  logger.info(`Webhook recibido: ${event.type}`);
+  console.log('=== STRIPE WEBHOOK RECEIVED ===');
+  console.log('Event type:', event.type);
+  console.log('Event ID:', event.id);
 
-  // Manejar el evento
   try {
     switch (event.type) {
       case 'checkout.session.completed':
         const session = event.data.object;
 
-        // Si es compra de pack
+        console.log('Checkout session completed');
+        console.log('Mode:', session.mode);
+        console.log('Metadata:', session.metadata);
+        console.log('Customer:', session.customer);
+        console.log('Payment status:', session.payment_status);
+
+        // ✅ DIFERENCIAR: Compra de pack vs Subscription
         if (session.mode === 'payment' && session.metadata?.packId) {
-          const { userId, packId } = session.metadata;
-
-          await supabaseAdmin.from('purchases').insert({
-            user_id: userId,
-            pack_id: packId,
-            amount_paid: session.amount_total / 100,
-            stripe_payment_id: session.payment_intent,
-            stripe_session_id: session.id
-          });
-
-          logger.info(`Pack purchased: ${packId} by ${userId}`);
-        }
-        // Si es subscription (código existente)
-        else if (session.mode === 'subscription') {
-          await handleCheckoutCompleted(session);
+          console.log('🎯 PACK PURCHASE DETECTED');
+          await handlePackPurchase(session);
+        } else if (session.mode === 'subscription') {
+          console.log('📅 SUBSCRIPTION DETECTED');
+          await handleSubscriptionCheckout(session);
+        } else {
+          console.log('⚠️ Unknown checkout type');
         }
         break;
+
       case 'customer.subscription.updated':
         await handleSubscriptionUpdated(event.data.object);
         break;
+
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object);
         break;
+
       case 'invoice.payment_succeeded':
         await handlePaymentSucceeded(event.data.object);
         break;
+
       case 'invoice.payment_failed':
         await handlePaymentFailed(event.data.object);
         break;
+
       default:
-        logger.info(`Evento no manejado: ${event.type}`);
+        console.log(`Unhandled event type: ${event.type}`);
     }
 
     res.json({ received: true });
   } catch (error) {
-    logger.error('Error procesando webhook:', error);
-    res.status(500).json({ error: 'Error procesando webhook' });
+    console.error('❌ Error processing webhook:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
   }
 });
+
+// ============================================
+// HANDLER: Compra de Pack
+// ============================================
+async function handlePackPurchase(session) {
+  const { userId, packId, packName } = session.metadata;
+
+  console.log('=== PROCESSING PACK PURCHASE ===');
+  console.log('User ID:', userId);
+  console.log('Pack ID:', packId);
+  console.log('Pack Name:', packName);
+  console.log('Amount paid:', session.amount_total / 100);
+  console.log('Payment Intent:', session.payment_intent);
+
+  try {
+    // 1. Registrar compra en tabla purchases
+    const { data: purchase, error: purchaseError } = await supabaseAdmin
+      .from('purchases')
+      .insert({
+        user_id: userId,
+        pack_id: packId,
+        amount_paid: session.amount_total / 100,
+        stripe_payment_id: session.payment_intent,
+        stripe_session_id: session.id
+      })
+      .select()
+      .single();
+
+    if (purchaseError) {
+      // Si ya existe (unique constraint), no es error
+      if (purchaseError.code === '23505') {
+        console.log('⚠️ Purchase already recorded (duplicate webhook)');
+        return;
+      }
+      throw purchaseError;
+    }
+
+    console.log('✅ Purchase recorded:', purchase.id);
+
+    // 2. Incrementar contador de purchases en pack
+    const { error: packError } = await supabaseAdmin.rpc('increment_pack_purchases', {
+      pack_id_param: packId
+    });
+
+    if (packError) {
+      console.error('⚠️ Error updating pack purchases count:', packError);
+      // No lanzar error, la compra ya se registró
+    } else {
+      console.log('✅ Pack purchase count incremented');
+    }
+
+    logger.info(`✅ Pack purchase completed: ${packName} for user ${userId}`);
+
+  } catch (error) {
+    console.error('❌ Error handling pack purchase:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// HANDLER: Subscription Checkout
+// ============================================
+async function handleSubscriptionCheckout(session) {
+  const { userId, plan, interval } = session.metadata;
+
+  console.log('=== PROCESSING SUBSCRIPTION ===');
+  console.log('User ID:', userId);
+  console.log('Plan:', plan);
+  console.log('Interval:', interval);
+
+  try {
+    const { error } = await supabaseAdmin
+      .from('users')
+      .update({
+        current_plan: plan,
+        subscription_interval: interval,
+        subscription_status: 'active',
+        stripe_customer_id: session.customer,
+        stripe_subscription_id: session.subscription
+      })
+      .eq('id', userId);
+
+    if (error) throw error;
+
+    logger.info(`Subscription activated: ${plan} for user ${userId}`);
+  } catch (error) {
+    console.error('Error handling subscription:', error);
+    throw error;
+  }
+}
 
 // Funciones para manejar webhooks
 async function handleCheckoutCompleted(session) {
