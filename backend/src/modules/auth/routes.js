@@ -23,19 +23,7 @@ router.post('/register', catchAsync(async (req, res) => {
 
     console.log('Validation passed for email:', email);
 
-    // 1. ✅ VERIFICAR SI EL USUARIO YA EXISTE (ANTES de crear en Auth)
-    const { data: existingUser } = await supabaseAdmin
-      .from('users')
-      .select('id, email')
-      .eq('email', email)
-      .single();
-
-    if (existingUser) {
-      console.log('User already exists:', email);
-      return res.status(400).json({ error: 'El usuario ya existe' });
-    }
-
-    // 2. VALIDAR PAGO DE STRIPE (si viene sessionId)
+    // 1. VALIDAR PAGO DE STRIPE (si viene sessionId)
     let planData = { plan: 'free', interval: 'monthly' };
     let stripeCustomerId = null;
     let stripeSubscriptionId = null;
@@ -63,12 +51,12 @@ router.post('/register', catchAsync(async (req, res) => {
       }
     }
 
-    // 3. HASHEAR CONTRASEÑA
+    // 2. HASHEAR CONTRASEÑA
     console.log('Hashing password...');
     const passwordHash = await bcrypt.hash(password, 10);
     console.log('Password hashed successfully');
 
-    // 4. CREAR USUARIO EN SUPABASE AUTH
+    // 3. CREAR USUARIO EN SUPABASE AUTH
     console.log('Creating user in Supabase Auth...');
 
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -81,18 +69,24 @@ router.post('/register', catchAsync(async (req, res) => {
     });
 
     if (authError) {
-      console.error('Error creating auth user:', authError);
+      console.error('❌ Error creating auth user:', authError);
+      console.error('Error code:', authError.code);
+      console.error('Error message:', authError.message);
 
-      if (authError.message?.includes('already') || authError.code === '23505') {
-        return res.status(400).json({ error: 'El usuario ya existe' });
+      // Manejar usuario duplicado en Auth
+      if (authError.message?.includes('already') ||
+        authError.message?.includes('duplicate') ||
+        authError.code === '23505') {
+        console.log('User already exists in Auth');
+        return res.status(400).json({ error: 'Este correo ya está registrado' });
       }
 
       return res.status(500).json({ error: 'Error al crear usuario' });
     }
 
-    console.log('Auth user created:', authData.user.id);
+    console.log('✅ Auth user created:', authData.user.id);
 
-    // 5. ✅ GUARDAR EN TABLA USERS (con manejo de duplicados)
+    // 4. GUARDAR EN TABLA USERS
     console.log('Inserting user in public.users table...');
 
     const { error: dbError } = await supabaseAdmin
@@ -100,7 +94,7 @@ router.post('/register', catchAsync(async (req, res) => {
       .insert({
         id: authData.user.id,
         email,
-        password_hash: passwordHash, // ✅ AQUÍ ESTÁ EL FIX
+        password_hash: passwordHash,
         full_name: fullName,
         current_plan: planData.plan || 'free',
         subscription_status: 'active',
@@ -110,19 +104,23 @@ router.post('/register', catchAsync(async (req, res) => {
       });
 
     if (dbError) {
-      console.error('Error inserting user in users table:', dbError);
+      console.error('❌ Error inserting user in users table:', dbError);
+      console.error('DB Error code:', dbError.code);
+      console.error('DB Error details:', dbError.details);
 
-      // ✅ SI FALLA, ELIMINAR USUARIO DE AUTH (rollback)
-      console.log('Rolling back: deleting user from auth...');
+      // ROLLBACK: Eliminar usuario de Auth
+      console.log('🔄 Rolling back: deleting user from auth...');
       try {
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-        console.log('User deleted from auth successfully');
+        console.log('✅ User deleted from auth successfully');
       } catch (deleteError) {
-        console.error('Error deleting user from auth:', deleteError);
+        console.error('❌ Error deleting user from auth:', deleteError);
       }
 
+      // Si es duplicado, mensaje específico
       if (dbError.code === '23505') {
-        return res.status(400).json({ error: 'El usuario ya existe' });
+        console.log('Duplicate key in users table');
+        return res.status(400).json({ error: 'Este correo ya está registrado' });
       }
 
       return res.status(500).json({ error: 'Error al crear usuario en base de datos' });
@@ -130,7 +128,7 @@ router.post('/register', catchAsync(async (req, res) => {
 
     console.log('✅ User record created successfully with password hash');
 
-    // 6. CREAR TOKEN JWT
+    // 5. CREAR TOKEN JWT
     const token = jwt.sign(
       {
         userId: authData.user.id,
@@ -141,10 +139,11 @@ router.post('/register', catchAsync(async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    console.log('✅ Registration successful for:', email);
+    console.log('✅ Token generated');
+    console.log('✅✅✅ REGISTRATION SUCCESSFUL FOR:', email);
     logger.info(`New user registered: ${email} (plan: ${planData.plan})`);
 
-    // 7. RESPUESTA EXITOSA
+    // 6. RESPUESTA EXITOSA
     res.status(201).json({
       success: true,
       user: {
@@ -158,7 +157,14 @@ router.post('/register', catchAsync(async (req, res) => {
 
   } catch (error) {
     console.error('=== REGISTER ERROR ===', error);
-    res.status(500).json({ error: 'Error en el registro', details: error.message });
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+
+    res.status(500).json({
+      error: 'Error en el registro',
+      details: error.message
+    });
   }
 }));
 
