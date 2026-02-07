@@ -22,43 +22,65 @@ router.get('/', catchAsync(async (req, res) => {
 router.get('/:slug', catchAsync(async (req, res) => {
     const { slug } = req.params;
 
+    console.log('=== GET PACK DETAILS ===');
+    console.log('Slug:', slug);
+
     // Obtener pack
-    const { data: pack } = await supabaseAdmin
+    const { data: pack, error: packError } = await supabaseAdmin
         .from('packs')
         .select('*')
         .eq('slug', slug)
         .eq('is_published', true)
         .single();
 
-    if (!pack) {
+    if (packError || !pack) {
+        console.log('Pack not found:', slug);
         return res.status(404).json({ error: 'Pack no encontrado' });
     }
 
-    // Verificar si el usuario autenticado ya lo compró (opcional)
+    console.log('Pack found:', pack.id);
+
+    // Verificar si el usuario autenticado ya lo compró
     let hasPurchased = false;
     const authHeader = req.headers.authorization;
 
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
             const token = authHeader.substring(7);
-            // Decodificar token para obtener userId
             const jwt = await import('jsonwebtoken');
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            const userId = decoded.userId || decoded.sub;
+            const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
+            const userId = decoded.userId || decoded.sub || decoded.id;
 
-            const { data: purchase } = await supabaseAdmin
+            console.log('Checking purchase for user:', userId);
+            console.log('Pack ID:', pack.id);
+
+            // ✅ USAR .maybeSingle() en lugar de .single()
+            const { data: purchase, error: purchaseError } = await supabaseAdmin
                 .from('purchases')
-                .select('id')
+                .select('id, created_at')
                 .eq('user_id', userId)
                 .eq('pack_id', pack.id)
-                .single();
+                .maybeSingle();  // ← Devuelve null si no hay, NO lanza error
 
-            hasPurchased = !!purchase;
+            console.log('Purchase query result:', { purchase, error: purchaseError });
+
+            if (purchaseError) {
+                console.error('Error checking purchase:', purchaseError);
+            } else if (purchase) {
+                console.log('✅ User has purchased this pack:', purchase.created_at);
+                hasPurchased = true;
+            } else {
+                console.log('❌ User has NOT purchased this pack');
+            }
+
         } catch (error) {
-            // Token inválido o no decodificable - continuar sin estado de compra
-            logger.debug('Could not verify purchase status:', error.message);
+            console.error('Error verifying purchase status:', error.message);
         }
+    } else {
+        console.log('No auth header provided');
     }
+
+    console.log('Sending response - hasPurchased:', hasPurchased);
 
     res.json({ pack, hasPurchased });
 }));
