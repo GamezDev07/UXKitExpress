@@ -8,36 +8,19 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-// Lazy initialization to avoid build-time errors
-let stripeInstance: Stripe | null = null
-let supabaseInstance: ReturnType<typeof createClient> | null = null
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-function getStripe() {
-    if (!stripeInstance) {
-        stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-            apiVersion: '2026-01-28.clover',
-        })
-    }
-    return stripeInstance
-}
-
-function getSupabase() {
-    if (!supabaseInstance) {
-        supabaseInstance = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        )
-    }
-    return supabaseInstance
-}
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 /**
  * Sincronizar un pack específico con Stripe
  */
 export async function syncPackToStripe(packId: string) {
     try {
-        const supabase = getSupabase()
-        const { data: pack, error } = await supabase
+        const { data: pack, error }: any = await supabase
             .from('packs')
             .select('*')
             .eq('id', packId)
@@ -62,7 +45,6 @@ export async function syncPackToStripe(packId: string) {
         }
 
         // Crear producto en Stripe
-        const stripe = getStripe()
         const stripeProduct = await stripe.products.create({
             name: pack.name,
             description: pack.short_description || pack.description,
@@ -109,7 +91,7 @@ export async function syncPackToStripe(packId: string) {
             stripe_product_id: stripeProduct.id,
             stripe_price_id: stripePrice.id,
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error(`❌ Error syncing pack:`, error)
         throw error
     }
@@ -123,8 +105,7 @@ export async function syncAllPacks() {
         console.log(`🔄 Starting full sync...`)
 
         // Obtener todos los packs publicados
-        const supabase = getSupabase()
-        const { data: packs, error } = await supabase
+        const { data: packs, error }: any = await supabase
             .from('packs')
             .select('*')
             .eq('is_published', true)
@@ -146,7 +127,7 @@ export async function syncAllPacks() {
 
                 // Pequeña pausa para evitar rate limits
                 await new Promise((resolve) => setTimeout(resolve, 500))
-            } catch (error) {
+            } catch (error: any) {
                 console.error(`Failed to sync pack ${pack.name}:`, error)
                 results.push({
                     success: false,
@@ -156,7 +137,7 @@ export async function syncAllPacks() {
             }
         }
 
-        const successCount = results.filter((r) => r.success).length
+        const successCount = results.filter((r: any) => r.success).length
         console.log(`✅ Sync complete: ${successCount}/${packs.length} successful`)
 
         return {
@@ -165,7 +146,7 @@ export async function syncAllPacks() {
             failed: packs.length - successCount,
             results,
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error(`❌ Full sync failed:`, error)
         throw error
     }
@@ -176,8 +157,7 @@ export async function syncAllPacks() {
  */
 export async function getSyncStatus() {
     try {
-        const supabase = getSupabase()
-        const { data: packs, error } = await supabase
+        const { data: packs, error }: any = await supabase
             .from('packs')
             .select('id, name, slug, price, stripe_product_id, stripe_price_id, is_published')
             .order('created_at', { ascending: false })
@@ -187,7 +167,7 @@ export async function getSyncStatus() {
         }
 
         // Analizar estado de sincronización
-        const syncStatus = packs?.map((pack) => ({
+        const syncStatus = packs?.map((pack: any) => ({
             id: pack.id,
             name: pack.name,
             slug: pack.slug,
@@ -201,16 +181,16 @@ export async function getSyncStatus() {
 
         const stats = {
             total: packs?.length || 0,
-            synced: syncStatus?.filter((p) => p.synced).length || 0,
-            needs_sync: syncStatus?.filter((p) => p.needs_sync).length || 0,
-            unpublished: syncStatus?.filter((p) => !p.is_published).length || 0,
+            synced: syncStatus?.filter((p: any) => p.synced).length || 0,
+            needs_sync: syncStatus?.filter((p: any) => p.needs_sync).length || 0,
+            unpublished: syncStatus?.filter((p: any) => !p.is_published).length || 0,
         }
 
         return {
             stats,
             packs: syncStatus,
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error getting sync status:', error)
         throw error
     }
@@ -221,8 +201,7 @@ export async function getSyncStatus() {
  */
 export async function archiveStripeProduct(packId: string) {
     try {
-        const supabase = getSupabase()
-        const { data: pack } = await supabase
+        const { data: pack }: any = await supabase
             .from('packs')
             .select('stripe_product_id, stripe_price_id')
             .eq('id', packId)
@@ -233,7 +212,6 @@ export async function archiveStripeProduct(packId: string) {
             return
         }
 
-        const stripe = getStripe()
         // Archivar precio
         if (pack.stripe_price_id) {
             await stripe.prices.update(pack.stripe_price_id, { active: false })
@@ -249,7 +227,7 @@ export async function archiveStripeProduct(packId: string) {
             archived_product: pack.stripe_product_id,
             archived_price: pack.stripe_price_id,
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error(`❌ Error archiving product:`, error)
         throw error
     }
@@ -261,8 +239,7 @@ export async function archiveStripeProduct(packId: string) {
  */
 export async function updateStripeProduct(packId: string) {
     try {
-        const supabase = getSupabase()
-        const { data: pack, error } = await supabase
+        const { data: pack, error }: any = await supabase
             .from('packs')
             .select('*')
             .eq('id', packId)
@@ -278,7 +255,6 @@ export async function updateStripeProduct(packId: string) {
 
         console.log(`🔄 Updating Stripe product: ${pack.name}`)
 
-        const stripe = getStripe()
         // Actualizar producto
         await stripe.products.update(pack.stripe_product_id, {
             name: pack.name,
@@ -324,7 +300,7 @@ export async function updateStripeProduct(packId: string) {
             pack_id: pack.id,
             stripe_product_id: pack.stripe_product_id,
         }
-    } catch (error) {
+    } catch (error: any) {
         console.error(`❌ Error updating product:`, error)
         throw error
     }
