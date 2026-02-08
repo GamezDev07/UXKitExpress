@@ -8,7 +8,13 @@
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+// Lazy initialization de Stripe (solo cuando se use, no en build time)
+function getStripe() {
+    if (!process.env.STRIPE_SECRET_KEY) {
+        throw new Error('STRIPE_SECRET_KEY is not configured')
+    }
+    return new Stripe(process.env.STRIPE_SECRET_KEY)
+}
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -43,6 +49,8 @@ export async function syncPackToStripe(packId: string) {
                 stripe_price_id: pack.stripe_price_id
             }
         }
+
+        const stripe = getStripe()
 
         // Crear producto en Stripe
         const stripeProduct = await stripe.products.create({
@@ -212,6 +220,8 @@ export async function archiveStripeProduct(packId: string) {
             return
         }
 
+        const stripe = getStripe()
+
         // Archivar precio
         if (pack.stripe_price_id) {
             await stripe.prices.update(pack.stripe_price_id, { active: false })
@@ -254,6 +264,8 @@ export async function updateStripeProduct(packId: string) {
         }
 
         console.log(`🔄 Updating Stripe product: ${pack.name}`)
+
+        const stripe = getStripe()
 
         // Actualizar producto
         await stripe.products.update(pack.stripe_product_id, {
