@@ -1,87 +1,71 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { StripeSync } from '@/lib/sync-stripe';
+/**
+ * API Route: /api/admin/sync-stripe
+ * 
+ * POST - Sincronizar todos los packs pendientes
+ * GET - Obtener estado de sincronización
+ */
 
+import { NextRequest, NextResponse } from 'next/server'
+import { syncAllPacks, getSyncStatus } from '@/lib/sync-stripe'
+
+/**
+ * POST - Sincronizar todos los packs
+ */
 export async function POST(req: NextRequest) {
     try {
-        console.log('🚀 API: Iniciando sincronización manual de packs...');
+        console.log('🚀 Manual sync initiated')
 
-        // Validar variables de entorno
-        const stripeKey = process.env.STRIPE_SECRET_KEY;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-        if (!stripeKey || !supabaseUrl || !supabaseServiceKey) {
-            console.error('❌ Faltan variables de entorno');
+        // Verificar variables de entorno
+        if (!process.env.STRIPE_SECRET_KEY) {
             return NextResponse.json(
-                {
-                    success: false,
-                    error: 'Configuración del servidor incompleta',
-                    missing: {
-                        stripe: !stripeKey,
-                        supabaseUrl: !supabaseUrl,
-                        supabaseKey: !supabaseServiceKey,
-                    },
-                },
+                { error: 'STRIPE_SECRET_KEY not configured' },
                 { status: 500 }
-            );
+            )
         }
 
-        // Crear instancia de sincronización
-        const syncService = new StripeSync(stripeKey, supabaseUrl, supabaseServiceKey);
+        if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+            return NextResponse.json(
+                { error: 'SUPABASE_SERVICE_ROLE_KEY not configured' },
+                { status: 500 }
+            )
+        }
 
         // Ejecutar sincronización
-        const result = await syncService.syncAllPacks();
+        const result = await syncAllPacks()
 
-        console.log('✅ Sincronización completada:', result);
+        console.log(`✅ Sync completed: ${result.synced}/${result.total} successful`)
 
-        return NextResponse.json(result, { status: 200 });
-
+        return NextResponse.json(result, { status: 200 })
     } catch (error: any) {
-        console.error('❌ Error en API de sincronización:', error);
+        console.error('❌ Sync failed:', error)
 
         return NextResponse.json(
             {
                 success: false,
-                error: error.message || 'Error desconocido',
-                details: error.stack,
+                error: error.message || 'Sync failed',
+                details: error.toString(),
             },
             { status: 500 }
-        );
+        )
     }
 }
 
+/**
+ * GET - Obtener estado de sincronización
+ */
 export async function GET(req: NextRequest) {
     try {
-        console.log('📊 API: Obteniendo estado de sincronización...');
+        const status = await getSyncStatus()
 
-        // Validar variables de entorno
-        const stripeKey = process.env.STRIPE_SECRET_KEY;
-        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-        if (!stripeKey || !supabaseUrl || !supabaseServiceKey) {
-            return NextResponse.json(
-                { error: 'Configuración del servidor incompleta' },
-                { status: 500 }
-            );
-        }
-
-        // Crear instancia de sincronización
-        const syncService = new StripeSync(stripeKey, supabaseUrl, supabaseServiceKey);
-
-        // Obtener estado
-        const status = await syncService.getSyncStatus();
-
-        console.log('✅ Estado obtenido:', status);
-
-        return NextResponse.json(status, { status: 200 });
-
+        return NextResponse.json(status, { status: 200 })
     } catch (error: any) {
-        console.error('❌ Error obteniendo estado:', error);
+        console.error('❌ Error getting status:', error)
 
         return NextResponse.json(
-            { error: error.message || 'Error desconocido' },
+            {
+                error: error.message || 'Failed to get status',
+            },
             { status: 500 }
-        );
+        )
     }
 }
