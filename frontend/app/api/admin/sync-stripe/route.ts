@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         // Ejecutar sincronización
         const result = await syncAllPacks()
 
-        console.log(`✅ Sync completed: ${result.synced}/${result.total} successful`)
+        console.log(`✅ Sync completed: ${result.successful}/${result.total} successful`)
 
         return NextResponse.json(result, { status: 200 })
     } catch (error: any) {
