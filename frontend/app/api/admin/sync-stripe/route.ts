@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { syncAllPacks, getSyncStatus } from '@/lib/sync-stripe'
+import { syncAllPacks, getSyncStatus } from '../../../../lib/sync-stripe'
 
 /**
  * POST - Sincronizar todos los packs
