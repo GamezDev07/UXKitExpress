@@ -1,0 +1,6 @@
+{
+  "crons": [{
+    "path": "/api/admin/process-sync-queue",
+    "schedule": "*/10 * * * *"
+  }]
+}
