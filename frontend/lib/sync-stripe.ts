@@ -62,7 +62,8 @@ export async function syncPackToStripe(packId: string) {
         }
 
         // Crear producto en Stripe
-        const stripe = getStripe()`n        const stripeProduct = await stripe.products.create({
+        const stripe = getStripe()
+        const stripeProduct = await stripe.products.create({
             name: pack.name,
             description: pack.short_description || pack.description,
             metadata: {
@@ -75,7 +76,7 @@ export async function syncPackToStripe(packId: string) {
         console.log(`✅ Created Stripe product: ${stripeProduct.id}`)
 
         // Crear precio en Stripe
-        const stripe = getStripe()`n        const stripePrice = await stripe.prices.create({
+        const stripePrice = await stripe.prices.create({
             product: stripeProduct.id,
             unit_amount: Math.round(pack.price * 100), // Convertir a centavos
             currency: 'usd',
@@ -87,7 +88,7 @@ export async function syncPackToStripe(packId: string) {
         console.log(`✅ Created Stripe price: ${stripePrice.id}`)
 
         // Actualizar pack en Supabase
-        const supabase = getSupabase()`n        const { error: updateError } = await supabase
+        const { error: updateError } = await supabase
             .from('packs')
             .update({
                 stripe_product_id: stripeProduct.id,
@@ -122,7 +123,8 @@ export async function syncAllPacks() {
         console.log(`🔄 Starting full sync...`)
 
         // Obtener todos los packs publicados
-        const supabase = getSupabase()`n        const { data: packs, error } = await supabase
+        const supabase = getSupabase()
+        const { data: packs, error } = await supabase
             .from('packs')
             .select('*')
             .eq('is_published', true)
@@ -174,7 +176,8 @@ export async function syncAllPacks() {
  */
 export async function getSyncStatus() {
     try {
-        const supabase = getSupabase()`n        const { data: packs, error } = await supabase
+        const supabase = getSupabase()
+        const { data: packs, error } = await supabase
             .from('packs')
             .select('id, name, slug, price, stripe_product_id, stripe_price_id, is_published')
             .order('created_at', { ascending: false })
@@ -218,7 +221,8 @@ export async function getSyncStatus() {
  */
 export async function archiveStripeProduct(packId: string) {
     try {
-        const { data: pack } = await getSupabase()
+        const supabase = getSupabase()
+        const { data: pack } = await supabase
             .from('packs')
             .select('stripe_product_id, stripe_price_id')
             .eq('id', packId)
@@ -229,14 +233,15 @@ export async function archiveStripeProduct(packId: string) {
             return
         }
 
+        const stripe = getStripe()
         // Archivar precio
         if (pack.stripe_price_id) {
-            await getStripe().prices.update(pack.stripe_price_id, { active: false })
+            await stripe.prices.update(pack.stripe_price_id, { active: false })
             console.log(`✓ Archived Stripe price: ${pack.stripe_price_id}`)
         }
 
         // Archivar producto
-        await getStripe().products.update(pack.stripe_product_id, { active: false })
+        await stripe.products.update(pack.stripe_product_id, { active: false })
         console.log(`✅ Archived Stripe product: ${pack.stripe_product_id}`)
 
         return {
@@ -256,7 +261,8 @@ export async function archiveStripeProduct(packId: string) {
  */
 export async function updateStripeProduct(packId: string) {
     try {
-        const supabase = getSupabase()`n        const { data: pack, error } = await supabase
+        const supabase = getSupabase()
+        const { data: pack, error } = await supabase
             .from('packs')
             .select('*')
             .eq('id', packId)
@@ -272,8 +278,9 @@ export async function updateStripeProduct(packId: string) {
 
         console.log(`🔄 Updating Stripe product: ${pack.name}`)
 
+        const stripe = getStripe()
         // Actualizar producto
-        await getStripe().products.update(pack.stripe_product_id, {
+        await stripe.products.update(pack.stripe_product_id, {
             name: pack.name,
             description: pack.short_description || pack.description,
             metadata: {
@@ -284,17 +291,17 @@ export async function updateStripeProduct(packId: string) {
         })
 
         // Verificar si el precio cambió
-        const stripe = getStripe()`n        const currentPrice = await stripe.prices.retrieve(pack.stripe_price_id)
+        const currentPrice = await stripe.prices.retrieve(pack.stripe_price_id)
         const newPriceAmount = Math.round(pack.price * 100)
 
         if (currentPrice.unit_amount !== newPriceAmount) {
             console.log(`💰 Price changed, creating new price...`)
 
             // Archivar precio anterior
-            await getStripe().prices.update(pack.stripe_price_id, { active: false })
+            await stripe.prices.update(pack.stripe_price_id, { active: false })
 
             // Crear nuevo precio
-            const stripe = getStripe()`n        const newPrice = await stripe.prices.create({
+            const newPrice = await stripe.prices.create({
                 product: pack.stripe_product_id,
                 unit_amount: newPriceAmount,
                 currency: 'usd',
@@ -302,7 +309,7 @@ export async function updateStripeProduct(packId: string) {
             })
 
             // Actualizar en Supabase
-            await getSupabase()
+            await supabase
                 .from('packs')
                 .update({ stripe_price_id: newPrice.id })
                 .eq('id', pack.id)
@@ -322,6 +329,3 @@ export async function updateStripeProduct(packId: string) {
         throw error
     }
 }
-
-
-
