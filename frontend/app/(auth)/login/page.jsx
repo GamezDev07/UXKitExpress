@@ -56,26 +56,22 @@ export default function LoginPage() {
     setErrors({});
 
     try {
-      console.log('🔐 Intentando login...');
+      console.log('🔐 Intentando login con Supabase Auth...');
 
-      // Llamar a signIn (ahora usa backend custom)
+      // Llamar a signIn (ahora usa Supabase Auth nativo)
       const result = await signIn(formData.email, formData.password);
 
       console.log('✅ Login exitoso:', result);
 
-      // VERIFICAR que el token se guardó
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('userData');
+      // Verificar que hay sesión
+      if (result?.user) {
+        console.log('✅ Usuario autenticado:', result.user.email);
 
-      console.log('🔍 Token guardado:', token ? '✅ SÍ' : '❌ NO');
-      console.log('🔍 UserData guardado:', userData ? '✅ SÍ' : '❌ NO');
-
-      if (!token) {
-        throw new Error('Token no se guardó en localStorage');
+        // Redirigir
+        router.push(redirect);
+      } else {
+        throw new Error('No se pudo obtener sesión del usuario');
       }
-
-      // Redirigir con parámetro de bienvenida
-      window.location.href = `${redirect}?loggedin=true`;
 
     } catch (error) {
       console.error('❌ Login error:', error);
