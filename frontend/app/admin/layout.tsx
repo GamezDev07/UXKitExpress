@@ -8,14 +8,19 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { createClient } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
+
+// Cliente Supabase
+const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [isAdmin, setIsAdmin] = useState(false)
     const [loading, setLoading] = useState(true)
     const [userEmail, setUserEmail] = useState<string | null>(null)
-    const supabase = createClientComponentClient()
     const router = useRouter()
 
     // ⚠️ CAMBIA ESTO: Agrega tu email aquí
