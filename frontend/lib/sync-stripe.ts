@@ -55,19 +55,14 @@ export class StripeSync {
         try {
             console.log(`🔄 Sincronizando pack: ${pack.name} (${pack.id})`);
 
-            // Si ya tiene IDs de Stripe, verificar si aún existen
+            // Si ya tiene IDs de Stripe, verificar y actualizar si es necesario
             if (pack.stripe_product_id && pack.stripe_price_id) {
                 try {
                     await this.stripe.products.retrieve(pack.stripe_product_id);
-                    console.log(`✅ Pack ya sincronizado: ${pack.name}`);
+                    console.log(`✅ Pack ya tiene producto en Stripe, verificando actualizaciones...`);
 
-                    return {
-                        packId: pack.id,
-                        packName: pack.name,
-                        success: true,
-                        stripeProductId: pack.stripe_product_id,
-                        stripePriceId: pack.stripe_price_id,
-                    };
+                    // Verificar si necesita actualización
+                    return await this.updateStripeProduct(pack);
                 } catch (error: any) {
                     // Si el producto no existe en Stripe, recrearlo
                     if (error.code === 'resource_missing') {
@@ -78,8 +73,8 @@ export class StripeSync {
                 }
             }
 
-            // Crear producto en Stripe
-            const product = await this.stripe.products.create({
+            // Crear producto en Stripe con metadata extendida
+            const productData: any = {
                 name: pack.name,
                 description: pack.description || undefined,
                 metadata: {
@@ -87,7 +82,20 @@ export class StripeSync {
                     slug: pack.slug,
                     syncedAt: new Date().toISOString(),
                 },
-            });
+            };
+
+            // Agregar campos opcionales si existen
+            if ((pack as any).short_description) {
+                productData.description = (pack as any).short_description;
+            }
+            if ((pack as any).components_count) {
+                productData.metadata.components_count = (pack as any).components_count.toString();
+            }
+            if ((pack as any).thumbnail_url) {
+                productData.images = [(pack as any).thumbnail_url];
+            }
+
+            const product = await this.stripe.products.create(productData);
 
             console.log(`✅ Producto creado en Stripe: ${product.id}`);
 
@@ -135,6 +143,102 @@ export class StripeSync {
                 packName: pack.name,
                 success: false,
                 error: error.message || 'Error desconocido',
+            };
+        }
+    }
+
+    /**
+     * Actualiza un producto existente en Stripe
+     * Verifica si el precio cambió y crea uno nuevo si es necesario
+     */
+    private async updateStripeProduct(pack: Pack): Promise<SyncResult> {
+        try {
+            console.log(`🔄 Verificando actualización para: ${pack.name}`);
+
+            // Preparar datos de actualización
+            const updateData: any = {
+                name: pack.name,
+                description: pack.description || undefined,
+                metadata: {
+                    packId: pack.id,
+                    slug: pack.slug,
+                    syncedAt: new Date().toISOString(),
+                },
+            };
+
+            // Agregar campos opcionales
+            if ((pack as any).short_description) {
+                updateData.description = (pack as any).short_description;
+            }
+            if ((pack as any).components_count) {
+                updateData.metadata.components_count = (pack as any).components_count.toString();
+            }
+            if ((pack as any).thumbnail_url) {
+                updateData.images = [(pack as any).thumbnail_url];
+            }
+
+            // Actualizar producto
+            await this.stripe.products.update(pack.stripe_product_id!, updateData);
+            console.log(`✅ Producto actualizado en Stripe`);
+
+            // Verificar si el precio cambió
+            const currentPrice = await this.stripe.prices.retrieve(pack.stripe_price_id!);
+            const newPriceAmount = Math.round(pack.price * 100);
+
+            if (currentPrice.unit_amount !== newPriceAmount) {
+                console.log(`💰 Precio cambió de $${currentPrice.unit_amount! / 100} a $${pack.price}`);
+
+                // Archivar precio anterior
+                await this.stripe.prices.update(pack.stripe_price_id!, { active: false });
+                console.log(`✅ Precio anterior archivado`);
+
+                // Crear nuevo precio
+                const newPrice = await this.stripe.prices.create({
+                    product: pack.stripe_product_id!,
+                    unit_amount: newPriceAmount,
+                    currency: 'usd',
+                    metadata: { packId: pack.id },
+                });
+
+                console.log(`✅ Nuevo precio creado: ${newPrice.id}`);
+
+                // Actualizar en Supabase
+                const { error: updateError } = await this.supabase
+                    .from('packs')
+                    .update({ stripe_price_id: newPrice.id })
+                    .eq('id', pack.id);
+
+                if (updateError) {
+                    console.error(`⚠️ Error actualizando price_id en Supabase:`, updateError);
+                }
+
+                return {
+                    packId: pack.id,
+                    packName: pack.name,
+                    success: true,
+                    stripeProductId: pack.stripe_product_id!,
+                    stripePriceId: newPrice.id,
+                };
+            }
+
+            console.log(`✅ Pack actualizado (precio sin cambios): ${pack.name}`);
+
+            return {
+                packId: pack.id,
+                packName: pack.name,
+                success: true,
+                stripeProductId: pack.stripe_product_id!,
+                stripePriceId: pack.stripe_price_id!,
+            };
+
+        } catch (error: any) {
+            console.error(`❌ Error actualizando producto:`, error);
+
+            return {
+                packId: pack.id,
+                packName: pack.name,
+                success: false,
+                error: error.message || 'Error al actualizar',
             };
         }
     }
@@ -326,5 +430,43 @@ export class StripeSync {
                 failed: queueFailed || 0,
             },
         };
+    }
+
+    /**
+     * Archiva un producto de Stripe (cuando pack se despublica)
+     */
+    async archiveStripeProduct(packId: string): Promise<{ success: boolean; error?: string }> {
+        try {
+            console.log(`🗄️ Archivando producto de Stripe para pack: ${packId}`);
+
+            const { data: pack } = await this.supabase
+                .from('packs')
+                .select('stripe_product_id, stripe_price_id, name')
+                .eq('id', packId)
+                .single();
+
+            if (!pack?.stripe_product_id) {
+                console.log(`⚠️ Pack no tiene producto de Stripe para archivar`);
+                return { success: true };
+            }
+
+            // Archivar precio
+            if (pack.stripe_price_id) {
+                await this.stripe.prices.update(pack.stripe_price_id, { active: false });
+                console.log(`✅ Precio archivado: ${pack.stripe_price_id}`);
+            }
+
+            // Archivar producto
+            await this.stripe.products.update(pack.stripe_product_id, { active: false });
+            console.log(`✅ Producto archivado: ${pack.stripe_product_id}`);
+
+            return { success: true };
+        } catch (error: any) {
+            console.error(`❌ Error archivando producto:`, error);
+            return {
+                success: false,
+                error: error.message || 'Error al archivar producto',
+            };
+        }
     }
 }
