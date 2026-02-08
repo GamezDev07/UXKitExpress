@@ -16,16 +16,24 @@ function getStripe() {
     return new Stripe(process.env.STRIPE_SECRET_KEY)
 }
 
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+// Lazy initialization de Supabase (solo cuando se use, no en build time)
+function getSupabase() {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error('Supabase credentials are not configured')
+    }
+    return createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY
+    )
+}
 
 /**
  * Sincronizar un pack específico con Stripe
  */
 export async function syncPackToStripe(packId: string) {
     try {
+        const supabase = getSupabase()
+
         const { data: pack, error }: any = await supabase
             .from('packs')
             .select('*')
@@ -112,6 +120,8 @@ export async function syncAllPacks() {
     try {
         console.log(`🔄 Starting full sync...`)
 
+        const supabase = getSupabase()
+
         // Obtener todos los packs publicados
         const { data: packs, error }: any = await supabase
             .from('packs')
@@ -165,6 +175,8 @@ export async function syncAllPacks() {
  */
 export async function getSyncStatus() {
     try {
+        const supabase = getSupabase()
+
         const { data: packs, error }: any = await supabase
             .from('packs')
             .select('id, name, slug, price, stripe_product_id, stripe_price_id, is_published')
@@ -209,6 +221,8 @@ export async function getSyncStatus() {
  */
 export async function archiveStripeProduct(packId: string) {
     try {
+        const supabase = getSupabase()
+
         const { data: pack }: any = await supabase
             .from('packs')
             .select('stripe_product_id, stripe_price_id')
@@ -249,6 +263,8 @@ export async function archiveStripeProduct(packId: string) {
  */
 export async function updateStripeProduct(packId: string) {
     try {
+        const supabase = getSupabase()
+
         const { data: pack, error }: any = await supabase
             .from('packs')
             .select('*')
