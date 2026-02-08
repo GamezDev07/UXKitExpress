@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
 
-// Cliente Supabase (solo para queries a DB, NO para auth)
+// Cliente Supabase para Auth y DB
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -23,106 +23,96 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Cargar usuario desde localStorage al montar
-    const token = localStorage.getItem('token')
-    const userData = localStorage.getItem('userData')
-
-    if (token && userData) {
+    // Obtener sesión actual de Supabase
+    const getSession = async () => {
       try {
-        const parsedUser = JSON.parse(userData)
-        setUser(parsedUser)
-        setUserPlan(parsedUser.plan || 'free')
-        console.log('✅ Usuario cargado desde localStorage:', parsedUser)
+        const { data: { session } } = await supabase.auth.getSession()
+
+        if (session?.user) {
+          setUser(session.user)
+          // Obtener plan del usuario desde metadata o tabla profiles
+          setUserPlan(session.user.user_metadata?.plan || 'free')
+          console.log('✅ Usuario cargado desde Supabase:', session.user)
+        }
       } catch (error) {
-        console.error('Error parsing userData:', error)
-        localStorage.removeItem('token')
-        localStorage.removeItem('userData')
+        console.error('Error loading session:', error)
+      } finally {
+        setLoading(false)
       }
     }
 
-    setLoading(false)
+    getSession()
+
+    // Escuchar cambios de autenticación
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        setUserPlan(session.user.user_metadata?.plan || 'free')
+      } else {
+        setUser(null)
+        setUserPlan('free')
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [])
 
-  // LOGIN con backend custom
+  // LOGIN con Supabase Auth
   const signIn = async (email, password) => {
     try {
-      console.log('🔐 Iniciando login custom...')
+      console.log('🔐 Iniciando login con Supabase Auth...')
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al iniciar sesión')
+      if (error) {
+        console.error('❌ Login error:', error)
+        throw new Error(error.message || 'Credenciales inválidas')
       }
 
-      console.log('📦 Respuesta del backend:', data)
+      console.log('✅ Login exitoso:', data.user)
 
-      // GUARDAR TOKEN Y USUARIO
-      if (data.token && data.user) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('userData', JSON.stringify(data.user))
+      setUser(data.user)
+      setUserPlan(data.user.user_metadata?.plan || 'free')
 
-        setUser(data.user)
-        setUserPlan(data.user.plan || 'free')
-
-        console.log('✅ Token guardado:', data.token.substring(0, 30) + '...')
-        console.log('✅ Usuario:', data.user)
-
-        return { user: data.user, session: { access_token: data.token } }
-      } else {
-        throw new Error('No se recibió token del servidor')
-      }
+      return data
     } catch (error) {
       console.error('❌ Login error:', error)
       throw error
     }
   }
 
-  // SIGNUP con backend custom
-  const signUp = async (email, password, fullName, sessionId = null) => {
+  // SIGNUP con Supabase Auth
+  const signUp = async (email, password, fullName) => {
     try {
-      console.log('📝 Iniciando registro custom...')
+      console.log('📝 Iniciando registro con Supabase Auth...')
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          fullName,
-          sessionId
-        }),
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            plan: 'free'
+          }
+        }
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al registrarse')
+      if (error) {
+        throw new Error(error.message || 'Error al registrarse')
       }
 
-      // GUARDAR TOKEN Y USUARIO
-      if (data.token && data.user) {
-        localStorage.setItem('token', data.token)
-        localStorage.setItem('userData', JSON.stringify(data.user))
+      console.log('✅ Registro exitoso:', data.user)
 
+      // Si el email no requiere confirmación, setear el usuario
+      if (data.user && data.session) {
         setUser(data.user)
-        setUserPlan(data.user.plan || 'free')
-
-        console.log('✅ Registro exitoso, token guardado')
-
-        return { user: data.user, session: { access_token: data.token } }
-      } else {
-        throw new Error('No se recibió token del servidor')
+        setUserPlan('free')
       }
+
+      return data
     } catch (error) {
       console.error('❌ Signup error:', error)
       throw error
@@ -131,11 +121,14 @@ export function AuthProvider({ children }) {
 
   // LOGOUT
   const signOut = async () => {
-    localStorage.removeItem('token')
-    localStorage.removeItem('userData')
-    setUser(null)
-    setUserPlan('free')
-    console.log('👋 Sesión cerrada')
+    try {
+      await supabase.auth.signOut()
+      setUser(null)
+      setUserPlan('free')
+      console.log('👋 Sesión cerrada')
+    } catch (error) {
+      console.error('❌ Logout error:', error)
+    }
   }
 
   const value = {
@@ -145,7 +138,7 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
-    supabase // Mantener para queries a DB
+    supabase
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
