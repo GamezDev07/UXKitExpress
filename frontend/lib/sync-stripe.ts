@@ -18,6 +18,11 @@ function getStripe() {
 
 // Lazy initialization de Supabase (solo cuando se use, no en build time)
 function getSupabase() {
+    console.log('🔍 DEBUGGING ENV VARS:')
+    console.log('SUPABASE_URL exists:', !!process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('SERVICE_KEY exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY)
+    console.log('URL value:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
         throw new Error('Supabase credentials are not configured')
     }
