@@ -109,14 +109,14 @@ export default function StripeSyncPage() {
                     />
                     <StatCard
                         title="En Cola"
-                        value={status?.queue.pending ?? 0}
+                        value={status?.queue?.pending ?? 0}
                         icon="📋"
                         color="blue"
                         loading={loading}
                     />
                     <StatCard
                         title="Fallidos"
-                        value={status?.queue.failed ?? 0}
+                        value={status?.queue?.failed ?? 0}
                         icon="❌"
                         color="red"
                         loading={loading}
@@ -175,8 +175,8 @@ export default function StripeSyncPage() {
                         </h2>
 
                         <div className={`p-4 rounded-xl mb-4 ${syncResult.success
-                                ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
-                                : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
+                            ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
+                            : 'bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800'
                             }`}>
                             <p className="font-semibold text-slate-900 dark:text-white">
                                 {syncResult.success ? '✅ Sincronización exitosa' : '⚠️ Sincronización parcial'}
