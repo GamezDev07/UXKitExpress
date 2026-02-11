@@ -131,19 +131,19 @@ export default function PacksPage() {
                                         key={pack.id}
                                         className="group bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow transition-all duration-300 relative card-lava-lamp"
                                     >
-                                        {/* Badge "Comprado" */}
-                                        {isPurchased && (
-                                            <div className="absolute top-4 right-4 z-30">
-                                                <div className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    Comprado
-                                                </div>
-                                            </div>
-                                        )}
-
                                         {/* Thumbnail with Slider */}
                                         <Link href={`/packs/${pack.slug}`}>
                                             <div className="relative aspect-video bg-gradient-to-br from-red-500 to-orange-500 dark:from-blue-600 dark:to-violet-600 cursor-pointer">
+                                                {/* Badge "Comprado" */}
+                                                {isPurchased && (
+                                                    <div className="absolute top-4 right-4 z-50">
+                                                        <div className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
+                                                            <CheckCircle className="w-4 h-4" />
+                                                            Comprado
+                                                        </div>
+                                                    </div>
+                                                )}
+
                                                 <PackSlider
                                                     images={pack.images || (pack.thumbnail_url ? [pack.thumbnail_url] : [])}
                                                     packName={pack.name}
