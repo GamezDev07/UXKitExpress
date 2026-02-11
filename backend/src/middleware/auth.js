@@ -35,7 +35,9 @@ export function authenticate(req, res, next) {
       });
     }
 
-    const decoded = jwt.verify(token, supabaseJwtSecret);
+    const decoded = jwt.verify(token, supabaseJwtSecret, {
+      algorithms: ['ES256', 'HS256'] // Supabase usa ES256
+    });
 
     // Tokens de Supabase tienen la estructura:
     // sub: user ID, email: email, role: 'authenticated', etc.
