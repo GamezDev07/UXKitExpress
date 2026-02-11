@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
-import { Package, Download, Check, ArrowLeft, ExternalLink } from 'lucide-react'
+import { Package, Download, Check, ArrowLeft, ExternalLink, CheckCircle } from 'lucide-react'
 import Header from '../../components/Header'
 import { useAuth } from '../../context/AuthContext'
 
@@ -127,7 +127,17 @@ export default function PackDetailPage() {
                     {/* Main Content */}
                     <div className="lg:col-span-2">
                         {/* Thumbnail */}
-                        <div className="aspect-video bg-gradient-to-br from-blue-500 to-violet-500 dark:from-blue-600 dark:to-violet-600 rounded-xl mb-8 flex items-center justify-center">
+                        <div className="relative aspect-video bg-gradient-to-br from-red-500 to-orange-500 dark:from-blue-600 dark:to-violet-600 rounded-xl mb-8 flex items-center justify-center overflow-hidden">
+                            {/* Badge de Comprado */}
+                            {hasPurchased && (
+                                <div className="absolute top-4 right-4 z-10">
+                                    <div className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg animate-fade-in">
+                                        <CheckCircle className="w-4 h-4" />
+                                        Comprado
+                                    </div>
+                                </div>
+                            )}
+
                             {pack.thumbnail_url ? (
                                 <img src={pack.thumbnail_url} alt={pack.name} className="w-full h-full object-cover rounded-xl" />
                             ) : (

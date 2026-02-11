@@ -55,12 +55,12 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
     }
 
     return (
-        <header className="border-b border-white/10 backdrop-blur-sm sticky top-0 z-50 bg-slate-950/80">
+        <header className="border-b border-gray-200 dark:border-white/10 backdrop-blur-sm sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 animate-enter">
                 <div className="flex items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="text-2xl font-bold hover:opacity-80 transition-opacity">
-                        <span className="bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 bg-clip-text text-transparent animate-shine">
+                        <span className="text-lava-lamp">
                             UX Kit Express
                         </span>
                     </Link>
