@@ -6,6 +6,8 @@ import { Search, Download, Lock, Star, Grid3x3, LayoutGrid, FileCode, Box, Menu 
 import Header from '../components/Header'
 import Button from '../components/Button'
 import WelcomeToast from '../components/WelcomeToast'
+import Skeleton from '../components/Skeleton'
+import UpgradeModal from '../components/UpgradeModal'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
@@ -16,8 +18,10 @@ export default function DashboardPage() {
     const [userData, setUserData] = useState(null)
     const [loadingUserData, setLoadingUserData] = useState(true)
     const [selectedCategory, setSelectedCategory] = useState('all')
+    const [planFilter, setPlanFilter] = useState('all') // New: 'all', 'available', 'premium'
     const [searchQuery, setSearchQuery] = useState('')
     const [showWelcome, setShowWelcome] = useState(false)
+    const [upgradeModal, setUpgradeModal] = useState({ isOpen: false, requiredPlan: '', componentName: '' })
 
     // Fetch user data from database
     useEffect(() => {
@@ -168,13 +172,26 @@ export default function DashboardPage() {
         const matchesCategory = selectedCategory === 'all' || component.category === selectedCategory
         const matchesSearch = component.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             component.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-        return matchesCategory && matchesSearch
+
+        // New: Plan filter logic
+        let matchesPlanFilter = true
+        if (planFilter === 'available') {
+            matchesPlanFilter = canAccessComponent(component.requiredPlan)
+        } else if (planFilter === 'premium') {
+            matchesPlanFilter = !canAccessComponent(component.requiredPlan)
+        }
+
+        return matchesCategory && matchesSearch && matchesPlanFilter
     })
 
     const handleDownload = async (component) => {
         if (!canAccessComponent(component.requiredPlan)) {
-            alert(`Este componente requiere el plan ${component.requiredPlan.toUpperCase()} o superior`)
-            window.location.href = '/pricing'
+            // Open upgrade modal instead of browser alert
+            setUpgradeModal({
+                isOpen: true,
+                requiredPlan: component.requiredPlan,
+                componentName: component.name
+            })
             return
         }
 
@@ -183,9 +200,58 @@ export default function DashboardPage() {
         alert('Descarga iniciada (función en desarrollo)')
     }
 
+    // Loading state with skeleton
+    if (authLoading || loadingUserData) {
+        return (
+            <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200">
+                <Header userPlan={currentPlan} subscriptionInterval={userData?.subscription_interval} />
+
+                {/* Header skeleton */}
+                <section className="py-12 px-4 sm:px-6 lg:px-8 border-b border-gray-200 dark:border-white/10">
+                    <div className="max-w-7xl mx-auto">
+                        <Skeleton variant="rectangle" height="48px" width="500px" className="mb-4" />
+                        <Skeleton variant="text" lines={1} className="max-w-xl" />
+                    </div>
+                </section>
+
+                {/* Search and filters skeleton */}
+                <section className="py-8 px-4 sm:px-6 lg:px-8 border-b border-gray-200 dark:border-white/10">
+                    <div className="max-w-7xl mx-auto">
+                        <Skeleton variant="rectangle" height="48px" className="mb-6 max-w-xl" />
+                        <div className="flex gap-3">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Skeleton key={i} variant="rectangle" height="40px" width="120px" />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Components grid skeleton */}
+                <section className="py-12 px-4 sm:px-6 lg:px-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            {Array.from({ length: 8 }).map((_, i) => (
+                                <Skeleton key={i} variant="card" />
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            </div>
+        )
+    }
+
     return (
         <div className="min-h-screen bg-white dark:bg-slate-950 text-gray-900 dark:text-slate-200 animate-enter">
             <Header userPlan={currentPlan} subscriptionInterval={userData?.subscription_interval} />
+
+            {/* Upgrade Modal */}
+            <UpgradeModal
+                isOpen={upgradeModal.isOpen}
+                onClose={() => setUpgradeModal({ isOpen: false, requiredPlan: '', componentName: '' })}
+                requiredPlan={upgradeModal.requiredPlan}
+                currentPlan={currentPlan}
+                componentName={upgradeModal.componentName}
+            />
 
             {/* Welcome Message Toast */}
             <WelcomeToast
@@ -221,6 +287,38 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-3">
+                        {/* Plan Filters */}
+                        <div className="flex items-center gap-2 mr-4">
+                            <button
+                                onClick={() => setPlanFilter('all')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${planFilter === 'all'
+                                        ? 'bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white'
+                                        : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-white hover:border-transparent hover:bg-gradient-to-r hover:from-red-600 hover:via-red-500 hover:to-orange-500 dark:hover:from-blue-500 dark:hover:to-violet-500'
+                                    }`}
+                            >
+                                Todos
+                            </button>
+                            <button
+                                onClick={() => setPlanFilter('available')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${planFilter === 'available'
+                                        ? 'bg-gradient-to-r from-green-600 to-emerald-500 text-white'
+                                        : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-white hover:border-transparent hover:bg-gradient-to-r hover:from-green-600 hover:to-emerald-500'
+                                    }`}
+                            >
+                                Mi Plan
+                            </button>
+                            <button
+                                onClick={() => setPlanFilter('premium')}
+                                className={`px-4 py-2 rounded-lg font-medium transition-all ${planFilter === 'premium'
+                                        ? 'bg-gradient-to-r from-purple-600 to-pink-500 text-white'
+                                        : 'bg-gray-100 dark:bg-slate-900/50 border border-gray-300 dark:border-white/10 text-gray-700 dark:text-slate-300 hover:text-white hover:border-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-pink-500'
+                                    }`}
+                            >
+                                Premium
+                            </button>
+                        </div>
+
+                        {/* Category Filters */}
                         {categories.map((category) => {
                             const Icon = category.icon
                             const isActive = selectedCategory === category.id
@@ -257,7 +355,7 @@ export default function DashboardPage() {
                             return (
                                 <div
                                     key={component.id}
-                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow hover:shadow-gray-200/50 dark:hover:shadow-black/50"
+                                    className="group bg-gray-50 dark:bg-slate-900/50 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow hover:shadow-gray-200/50 dark:hover:shadow-black/50 card-lava-lamp"
                                 >
                                     <div className="relative aspect-[4/3] bg-gray-200 dark:bg-slate-800 overflow-hidden">
                                         <img

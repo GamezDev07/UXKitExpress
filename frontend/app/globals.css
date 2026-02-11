@@ -366,6 +366,61 @@
   .nav-link:hover::after {
     @apply scale-x-100 origin-left;
   }
+
+  /* ===========================
+     LAVA LAMP ANIMATION
+     =========================== */
+
+  /* Lava Lamp Float Animation */
+  @keyframes lava-float {
+    0%, 100% {
+      transform: translate(-10%, -10%) scale(1);
+    }
+    50% {
+      transform: translate(10%, 15%) scale(1.1);
+    }
+  }
+
+  /* Card with Lava Lamp Effect */
+  .card-lava-lamp {
+    @apply relative overflow-hidden;
+  }
+
+  /* The "blob" of the lava lamp */
+  .card-lava-lamp::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-full opacity-0 transition-opacity duration-500 pointer-events-none;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    z-index: 0;
+    background: radial-gradient(
+      circle at center,
+      var(--accent-gradient-from),
+      var(--accent-gradient-via),
+      var(--accent-gradient-to),
+      transparent 70%
+    );
+    filter: blur(60px);
+    animation: lava-float 8s infinite alternate ease-in-out;
+  }
+
+  /* Only activates on hover - subtle in light mode */
+  .card-lava-lamp:hover::before {
+    opacity: 0.15;
+  }
+
+  /* More vibrant in dark mode */
+  .dark .card-lava-lamp:hover::before {
+    opacity: 0.3;
+  }
+
+  /* Ensure content is above the lava */
+  .card-lava-lamp > * {
+    @apply relative;
+    z-index: 1;
+  }
 }
 
 /* ===========================

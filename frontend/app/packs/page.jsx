@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Package, Download, Star, ArrowRight, CheckCircle } from 'lucide-react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import Skeleton from '../components/Skeleton'
 
 export default function PacksPage() {
     const [packs, setPacks] = useState([])
@@ -64,12 +65,25 @@ export default function PacksPage() {
         return (
             <div className="min-h-screen bg-gray-50 dark:bg-slate-950">
                 <Header />
-                <div className="container mx-auto px-4 py-20">
-                    <div className="text-center">
-                        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-500"></div>
-                        <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando packs...</p>
+
+                {/* Hero Section Skeleton */}
+                <section className="py-16 px-4 border-b border-gray-200 dark:border-white/10">
+                    <div className="max-w-7xl mx-auto text-center">
+                        <Skeleton variant="rectangle" height="48px" className="mx-auto mb-6" width="400px" />
+                        <Skeleton variant="text" lines={2} className="max-w-2xl mx-auto" />
                     </div>
-                </div>
+                </section>
+
+                {/* Packs Grid Skeleton */}
+                <section className="py-12 px-4">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <Skeleton key={i} variant="pack" />
+                            ))}
+                        </div>
+                    </div>
+                </section>
             </div>
         )
     }
@@ -111,7 +125,7 @@ export default function PacksPage() {
                                 return (
                                     <div
                                         key={pack.id}
-                                        className="group bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow transition-all duration-300 relative"
+                                        className="group bg-white dark:bg-slate-900 border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden hover-card-subtle shadow-glow transition-all duration-300 relative card-lava-lamp"
                                     >
                                         {/* Badge "Comprado" */}
                                         {isPurchased && (
@@ -175,11 +189,11 @@ export default function PacksPage() {
                                                 </button>
                                             ) : (
                                                 <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                                                    <div className="inline-flex items-baseline gap-2 px-4 py-2 bg-gradient-to-r from-red-50 to-orange-50 dark:from-blue-900/20 dark:to-violet-900/20 rounded-lg border border-red-200 dark:border-blue-500/30">
+                                                        <span className="text-4xl font-extrabold bg-gradient-to-r from-red-600 to-orange-500 dark:from-blue-400 dark:to-violet-400 bg-clip-text text-transparent">
                                                             ${pack.price}
                                                         </span>
-                                                        <span className="text-gray-600 dark:text-gray-400 ml-1">
+                                                        <span className="text-sm text-gray-600 dark:text-gray-400">
                                                             pago único
                                                         </span>
                                                     </div>
