@@ -47,30 +47,42 @@ router.get('/:slug', catchAsync(async (req, res) => {
     if (authHeader && authHeader.startsWith('Bearer ')) {
         try {
             const token = authHeader.substring(7);
-            const jwt = await import('jsonwebtoken');
-            const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
-            const userId = decoded.userId || decoded.sub || decoded.id;
 
-            console.log('Checking purchase for user:', userId);
-            console.log('Pack ID:', pack.id);
+            // Usar Supabase client para verificar el token
+            const { createClient } = await import('@supabase/supabase-js');
+            const supabase = createClient(
+                process.env.SUPABASE_URL,
+                process.env.SUPABASE_ANON_KEY
+            );
 
-            // ✅ USAR .maybeSingle() en lugar de .single()
-            const { data: purchase, error: purchaseError } = await supabaseAdmin
-                .from('purchases')
-                .select('id, created_at')
-                .eq('user_id', userId)
-                .eq('pack_id', pack.id)
-                .maybeSingle();  // ← Devuelve null si no hay, NO lanza error
+            const { data: { user }, error: authError } = await supabase.auth.getUser(token);
 
-            console.log('Purchase query result:', { purchase, error: purchaseError });
-
-            if (purchaseError) {
-                console.error('Error checking purchase:', purchaseError);
-            } else if (purchase) {
-                console.log('✅ User has purchased this pack:', purchase.created_at);
-                hasPurchased = true;
+            if (authError || !user) {
+                console.log('Token validation failed:', authError?.message);
             } else {
-                console.log('❌ User has NOT purchased this pack');
+                const userId = user.id;
+
+                console.log('Checking purchase for user:', userId);
+                console.log('Pack ID:', pack.id);
+
+                // ✅ USAR .maybeSingle() en lugar de .single()
+                const { data: purchase, error: purchaseError } = await supabaseAdmin
+                    .from('purchases')
+                    .select('id, created_at')
+                    .eq('user_id', userId)
+                    .eq('pack_id', pack.id)
+                    .maybeSingle();  // ← Devuelve null si no hay, NO lanza error
+
+                console.log('Purchase query result:', { purchase, error: purchaseError });
+
+                if (purchaseError) {
+                    console.error('Error checking purchase:', purchaseError);
+                } else if (purchase) {
+                    console.log('✅ User has purchased this pack:', purchase.created_at);
+                    hasPurchased = true;
+                } else {
+                    console.log('❌ User has NOT purchased this pack');
+                }
             }
 
         } catch (error) {
