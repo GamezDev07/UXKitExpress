@@ -24,17 +24,27 @@ export function authenticate(req, res, next) {
       });
     }
 
-    // Verificar token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Verificar token de Supabase usando el JWT secret de Supabase
+    const supabaseJwtSecret = process.env.SUPABASE_JWT_SECRET;
 
-    // El token puede tener diferentes estructuras dependiendo de cuándo se creó
-    // Normalizar la estructura del usuario
+    if (!supabaseJwtSecret) {
+      logger.error('SUPABASE_JWT_SECRET not configured');
+      return res.status(500).json({
+        status: 'error',
+        message: 'Error de configuración del servidor'
+      });
+    }
+
+    const decoded = jwt.verify(token, supabaseJwtSecret);
+
+    // Tokens de Supabase tienen la estructura:
+    // sub: user ID, email: email, role: 'authenticated', etc.
     req.user = {
-      userId: decoded.userId || decoded.sub || decoded.id,
+      userId: decoded.sub,
       email: decoded.email,
-      plan: decoded.plan || decoded.current_plan,
-      sub: decoded.userId || decoded.sub || decoded.id, // Para compatibilidad
-      id: decoded.userId || decoded.sub || decoded.id
+      plan: decoded.user_metadata?.plan || 'free',
+      sub: decoded.sub,
+      id: decoded.sub
     };
 
     logger.debug(`User authenticated: ${req.user.userId}`);
