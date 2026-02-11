@@ -8,6 +8,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Skeleton from '../components/Skeleton'
 import { supabase } from '../context/AuthContext'
+import PackSlider from '../components/PackSlider'
 
 export default function PacksPage() {
     const [packs, setPacks] = useState([])
@@ -140,20 +141,13 @@ export default function PacksPage() {
                                             </div>
                                         )}
 
-                                        {/* Thumbnail */}
+                                        {/* Thumbnail with Slider */}
                                         <Link href={`/packs/${pack.slug}`}>
-                                            <div className="relative aspect-video bg-gradient-to-br from-blue-500 to-violet-500 dark:from-blue-600 dark:to-violet-600 cursor-pointer">
-                                                {pack.thumbnail_url ? (
-                                                    <img
-                                                        src={pack.thumbnail_url}
-                                                        alt={pack.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center">
-                                                        <Package className="w-16 h-16 text-white/50" />
-                                                    </div>
-                                                )}
+                                            <div className="relative aspect-video bg-gradient-to-br from-red-500 to-orange-500 dark:from-blue-600 dark:to-violet-600 cursor-pointer">
+                                                <PackSlider
+                                                    images={pack.images || (pack.thumbnail_url ? [pack.thumbnail_url] : [])}
+                                                    packName={pack.name}
+                                                />
                                             </div>
                                         </Link>
 
