@@ -6,6 +6,7 @@ import { Package, Download, Check, ArrowLeft, ExternalLink, CheckCircle } from '
 import Header from '../../components/Header'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../context/AuthContext'
+import PackSlider from '../../components/PackSlider'
 
 export default function PackDetailPage() {
     const { slug } = useParams()
