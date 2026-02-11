@@ -7,6 +7,7 @@ import { Package, Download, Star, ArrowRight, CheckCircle } from 'lucide-react'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import Skeleton from '../components/Skeleton'
+import { supabase } from '../context/AuthContext'
 
 export default function PacksPage() {
     const [packs, setPacks] = useState([])
@@ -17,7 +18,9 @@ export default function PacksPage() {
     useEffect(() => {
         async function loadPacks() {
             try {
-                const token = localStorage.getItem('token')
+                // Obtener token de Supabase session
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
 
                 // Cargar lista de packs
                 const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packs`)
