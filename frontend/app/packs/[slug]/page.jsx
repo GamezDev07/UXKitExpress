@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation'
 import { Package, Download, Check, ArrowLeft, ExternalLink, CheckCircle } from 'lucide-react'
 import Header from '../../components/Header'
 import { useAuth } from '../../context/AuthContext'
+import { supabase } from '../../context/AuthContext'
 
 export default function PackDetailPage() {
     const { slug } = useParams()
@@ -65,7 +66,16 @@ export default function PackDetailPage() {
         setPurchasing(true)
 
         try {
-            const token = localStorage.getItem('token')
+            // Obtener token de Supabase session
+            const { data: { session } } = await supabase.auth.getSession()
+            const token = session?.access_token
+
+            if (!token) {
+                alert('Sesión expirada. Por favor inicia sesión nuevamente.')
+                router.push('/login')
+                return
+            }
+
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/packs/purchase`, {
                 method: 'POST',
                 headers: {
