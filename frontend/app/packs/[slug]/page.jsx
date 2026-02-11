@@ -137,8 +137,8 @@ export default function PackDetailPage() {
                 <div className="grid lg:grid-cols-3 gap-8">
                     {/* Main Content */}
                     <div className="lg:col-span-2">
-                        {/* Thumbnail */}
-                        <div className="relative aspect-video bg-gradient-to-br from-red-500 to-orange-500 dark:from-blue-600 dark:to-violet-600 rounded-xl mb-8 flex items-center justify-center overflow-hidden">
+                        {/* Thumbnail with Slider */}
+                        <div className="relative aspect-video bg-gradient-to-br from-red-500 to-orange-500 dark:from-blue-600 dark:to-violet-600 rounded-xl mb-8 overflow-hidden">
                             {/* Badge de Comprado */}
                             {hasPurchased && (
                                 <div className="absolute top-4 right-4 z-10">
@@ -149,11 +149,10 @@ export default function PackDetailPage() {
                                 </div>
                             )}
 
-                            {pack.thumbnail_url ? (
-                                <img src={pack.thumbnail_url} alt={pack.name} className="w-full h-full object-cover rounded-xl" />
-                            ) : (
-                                <Package className="w-24 h-24 text-white/50" />
-                            )}
+                            <PackSlider
+                                images={pack.images || (pack.thumbnail_url ? [pack.thumbnail_url] : [])}
+                                packName={pack.name}
+                            />
                         </div>
 
                         {/* Description */}
