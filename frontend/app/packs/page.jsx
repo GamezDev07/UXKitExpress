@@ -133,7 +133,7 @@ export default function PacksPage() {
                                     >
                                         {/* Badge "Comprado" */}
                                         {isPurchased && (
-                                            <div className="absolute top-4 right-4 z-10">
+                                            <div className="absolute top-4 right-4 z-30">
                                                 <div className="flex items-center gap-1.5 bg-green-500 text-white px-3 py-1.5 rounded-full text-sm font-semibold shadow-lg">
                                                     <CheckCircle className="w-4 h-4" />
                                                     Comprado
