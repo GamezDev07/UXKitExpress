@@ -20,8 +20,9 @@ export default function PackDetailPage() {
     useEffect(() => {
         async function loadPack() {
             try {
-                // ✅ OBTENER TOKEN
-                const token = localStorage.getItem('token');
+                // ✅ OBTENER TOKEN DE SUPABASE SESSION
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
 
                 // ✅ AGREGAR HEADERS SI HAY TOKEN
                 const headers = {
