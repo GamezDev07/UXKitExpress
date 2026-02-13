@@ -30,9 +30,11 @@ export function AuthProvider({ children }) {
 
         if (session?.user) {
           setUser(session.user)
-          // Obtener plan del usuario desde metadata o tabla profiles
-          setUserPlan(session.user.user_metadata?.plan || 'free')
+          // Priorizar current_plan de la tabla users, luego user_metadata.plan
+          const plan = session.user.current_plan || session.user.user_metadata?.plan || 'free'
+          setUserPlan(plan)
           console.log('✅ Usuario cargado desde Supabase:', session.user)
+          console.log('📋 Plan detectado:', plan)
         }
       } catch (error) {
         console.error('Error loading session:', error)
@@ -47,7 +49,8 @@ export function AuthProvider({ children }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser(session.user)
-        setUserPlan(session.user.user_metadata?.plan || 'free')
+        const plan = session.user.current_plan || session.user.user_metadata?.plan || 'free'
+        setUserPlan(plan)
       } else {
         setUser(null)
         setUserPlan('free')

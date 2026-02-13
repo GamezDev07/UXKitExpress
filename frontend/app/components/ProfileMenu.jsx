@@ -19,7 +19,7 @@ export default function ProfileMenu() {
     const [isOpen, setIsOpen] = useState(false)
     const menuRef = useRef(null)
     const router = useRouter()
-    const { user, signOut } = useAuth()
+    const { user, userPlan, signOut } = useAuth()  // 🆕 Usando userPlan del context
     const { isDark, toggleTheme } = useTheme()
 
     // Close menu when clicking outside
@@ -75,7 +75,6 @@ export default function ProfileMenu() {
 
     const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'
     const displayEmail = user?.email || ''
-    const userPlan = user?.current_plan || user?.user_metadata?.plan || 'free'
 
     return (
         <div className="relative" ref={menuRef}>

@@ -9,10 +9,9 @@ import Footer from '../components/Footer'
 import PlanBadge from '../components/PlanBadge'
 
 export default function DownloadsPage() {
-    const { user } = useAuth()
+    const { user, userPlan } = useAuth()
     const [purchases, setPurchases] = useState([])
     const [loading, setLoading] = useState(true)
-    const userPlan = user?.current_plan || user?.user_metadata?.plan || 'free'
 
     useEffect(() => {
         if (user) {

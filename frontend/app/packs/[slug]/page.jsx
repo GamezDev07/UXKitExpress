@@ -7,6 +7,8 @@ import Header from '../../components/Header'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../context/AuthContext'
 import PackSlider from '../../components/PackSlider'
+import FavoriteButton from '../../components/FavoriteButton'
+import PlanBadge from '../../components/PlanBadge'
 
 export default function PackDetailPage() {
     const { slug } = useParams()
@@ -140,6 +142,15 @@ export default function PackDetailPage() {
                     <div className="lg:col-span-2">
                         {/* Thumbnail with Slider */}
                         <div className="relative aspect-video bg-gradient-to-br from-red-500 to-orange-500 dark:from-blue-600 dark:to-violet-600 rounded-xl mb-8 overflow-hidden">
+                            {/* Favorite Button - Top Left */}
+                            <div className="absolute top-4 left-4 z-30">
+                                <FavoriteButton
+                                    itemId={pack.id}
+                                    itemType="pack"
+                                    className="p-3 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-white dark:hover:bg-gray-900 hover:scale-110"
+                                />
+                            </div>
+
                             {/* Badge de Comprado */}
                             {hasPurchased && (
                                 <div className="absolute top-4 right-4 z-30">
