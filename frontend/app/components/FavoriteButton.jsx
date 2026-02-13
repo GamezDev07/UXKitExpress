@@ -53,8 +53,10 @@ export default function FavoriteButton({
         e.preventDefault()
         e.stopPropagation()
 
+        console.log('❤️ Toggle favorite clicked', { itemId, itemType, isFavorite })
+
         if (!user) {
-            // Redirect to login or show modal
+            console.log('⚠️ No user logged in, redirecting to login')
             window.location.href = '/login'
             return
         }
@@ -62,15 +64,19 @@ export default function FavoriteButton({
         setIsLoading(true)
 
         try {
+            console.log('🔐 Getting auth token...')
             const token = await getAuthToken()
             if (!token) {
-                console.error('No auth token available')
+                console.error('❌ No auth token available')
                 setIsLoading(false)
                 return
             }
 
+            console.log('✅ Token obtained')
+
             if (isFavorite && favoriteId) {
                 // Remove from favorites
+                console.log(`🗑️ Removing from favorites (ID: ${favoriteId})`)
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites/${favoriteId}`,
                     {
@@ -81,15 +87,22 @@ export default function FavoriteButton({
                     }
                 )
 
+                console.log('📡 DELETE Response status:', response.status)
+
                 if (response.ok) {
                     setIsFavorite(false)
                     setFavoriteId(null)
-                    console.log('✅ Removed from favorites')
+                    console.log('✅ Removed from favorites successfully')
                 } else {
-                    console.error('❌ Failed to remove favorite:', await response.text())
+                    const errorText = await response.text()
+                    console.error('❌ Failed to remove favorite:', {
+                        status: response.status,
+                        error: errorText
+                    })
                 }
             } else {
                 // Add to favorites
+                console.log(`💾 Adding to favorites...`, { itemId, itemType })
                 const response = await fetch(
                     `${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites`,
                     {
@@ -105,17 +118,24 @@ export default function FavoriteButton({
                     }
                 )
 
+                console.log('📡 POST Response status:', response.status)
+
                 if (response.ok) {
                     const data = await response.json()
+                    console.log('📦 API Response:', data)
                     setIsFavorite(true)
                     setFavoriteId(data.favorite.id)
-                    console.log('✅ Added to favorites')
+                    console.log('✅ Added to favorites successfully', data.favorite)
                 } else {
-                    console.error('❌ Failed to add favorite:', await response.text())
+                    const errorText = await response.text()
+                    console.error('❌ Failed to add favorite:', {
+                        status: response.status,
+                        error: errorText
+                    })
                 }
             }
         } catch (error) {
-            console.error('Error toggling favorite:', error)
+            console.error('❌ Error toggling favorite:', error)
         } finally {
             setIsLoading(false)
         }
