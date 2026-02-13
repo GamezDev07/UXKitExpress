@@ -29,12 +29,29 @@ export function AuthProvider({ children }) {
         const { data: { session } } = await supabase.auth.getSession()
 
         if (session?.user) {
-          setUser(session.user)
-          // Priorizar current_plan de la tabla users, luego user_metadata.plan
-          const plan = session.user.current_plan || session.user.user_metadata?.plan || 'free'
-          setUserPlan(plan)
-          console.log('✅ Usuario cargado desde Supabase:', session.user)
-          console.log('📋 Plan detectado:', plan)
+          // 🆕 Fetch user data from users table
+          const { data: userData, error: userError } = await supabase
+            .from('users')
+            .select('current_plan, subscription_status, subscription_interval')
+            .eq('id', session.user.id)
+            .single()
+
+          if (!userError && userData) {
+            // Merge Supabase Auth user with custom user data
+            const enrichedUser = {
+              ...session.user,
+              current_plan: userData.current_plan,
+              subscription_status: userData.subscription_status,
+              subscription_interval: userData.subscription_interval
+            }
+            setUser(enrichedUser)
+            setUserPlan(userData.current_plan || 'free')
+            console.log('✅ Usuario cargado con plan:', userData.current_plan)
+          } else {
+            setUser(session.user)
+            setUserPlan('free')
+            console.log('⚠️ No se encontró plan en tabla users, usando free')
+          }
         }
       } catch (error) {
         console.error('Error loading session:', error)
@@ -46,11 +63,29 @@ export function AuthProvider({ children }) {
     getSession()
 
     // Escuchar cambios de autenticación
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        setUser(session.user)
-        const plan = session.user.current_plan || session.user.user_metadata?.plan || 'free'
-        setUserPlan(plan)
+        // 🆕 Fetch user data from users table
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('current_plan, subscription_status, subscription_interval')
+          .eq('id', session.user.id)
+          .single()
+
+        if (!userError && userData) {
+          const enrichedUser = {
+            ...session.user,
+            current_plan: userData.current_plan,
+            subscription_status: userData.subscription_status,
+            subscription_interval: userData.subscription_interval
+          }
+          setUser(enrichedUser)
+          setUserPlan(userData.current_plan || 'free')
+          console.log('✅ Plan actualizado:', userData.current_plan)
+        } else {
+          setUser(session.user)
+          setUserPlan('free')
+        }
       } else {
         setUser(null)
         setUserPlan('free')
@@ -77,8 +112,28 @@ export function AuthProvider({ children }) {
 
       console.log('✅ Login exitoso:', data.user)
 
-      setUser(data.user)
-      setUserPlan(data.user.user_metadata?.plan || 'free')
+      // 🆕 Fetch user data from users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('current_plan, subscription_status, subscription_interval')
+        .eq('id', data.user.id)
+        .single()
+
+      if (!userError && userData) {
+        const enrichedUser = {
+          ...data.user,
+          current_plan: userData.current_plan,
+          subscription_status: userData.subscription_status,
+          subscription_interval: userData.subscription_interval
+        }
+        setUser(enrichedUser)
+        setUserPlan(userData.current_plan || 'free')
+        console.log('✅ Plan del usuario:', userData.current_plan)
+      } else {
+        setUser(data.user)
+        setUserPlan('free')
+        console.log('⚠️ No se encontró plan en tabla users')
+      }
 
       return data
     } catch (error) {
@@ -135,14 +190,46 @@ export function AuthProvider({ children }) {
   }
 
   // UPDATE USER
-  const updateUser = (userData) => {
-    setUser(prev => ({
-      ...prev,
-      ...userData
-    }))
-    // Update plan if it's in the userData
-    if (userData.user_metadata?.plan) {
-      setUserPlan(userData.user_metadata.plan)
+  const updateUser = async (userData) => {
+    try {
+      // Update in Supabase Auth if it's user_metadata
+      if (userData.user_metadata) {
+        const { error } = await supabase.auth.updateUser({
+          data: userData.user_metadata
+        })
+        if (error) throw error
+      }
+
+      // Update in users table if it's custom fields
+      if (userData.current_plan || userData.subscription_status) {
+        const { error } = await supabase
+          .from('users')
+          .update({
+            current_plan: userData.current_plan,
+            subscription_status: userData.subscription_status,
+            subscription_interval: userData.subscription_interval,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id)
+
+        if (error) throw error
+      }
+
+      // Update local state
+      setUser(prev => ({
+        ...prev,
+        ...userData
+      }))
+
+      // Update plan if provided
+      if (userData.current_plan) {
+        setUserPlan(userData.current_plan)
+      }
+
+      console.log('✅ Usuario actualizado')
+    } catch (error) {
+      console.error('❌ Error updating user:', error)
+      throw error
     }
   }
 
