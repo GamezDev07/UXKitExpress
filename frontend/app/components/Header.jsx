@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 import ProfileMenu from './ProfileMenu'
+import PlanBadge from './PlanBadge'
 
 export default function Header({ userPlan = null, subscriptionInterval = null }) {
     const pathname = usePathname()
@@ -53,9 +54,7 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
 
                         {/* User Plan Badge - Only show if user is logged in */}
                         {user && userPlan && (
-                            <div className="px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full animate-shine">
-                                Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)} {subscriptionInterval ? (subscriptionInterval === 'monthly' ? 'Monthly' : 'Annual') : ''}
-                            </div>
+                            <PlanBadge plan={userPlan} size="md" />
                         )}
 
                         {/* Theme Toggle */}
@@ -111,9 +110,7 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
                                 </Link>
                             ))}
                             {user && userPlan && (
-                                <div className="inline-flex px-3 py-1 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-full w-fit">
-                                    Plan: {userPlan.charAt(0).toUpperCase() + userPlan.slice(1)}
-                                </div>
+                                <PlanBadge plan={userPlan} size="md" />
                             )}
 
                             {/* Theme Toggle Mobile */}
