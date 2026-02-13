@@ -33,7 +33,7 @@ export default function FavoritesPage() {
                 return
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/favorites`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -53,7 +53,7 @@ export default function FavoritesPage() {
             const token = await getAuthToken()
             if (!token) return
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/favorites/${favoriteId}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites/${favoriteId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`
