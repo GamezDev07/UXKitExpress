@@ -1,6 +1,6 @@
 import express from 'express';
 import { authenticate } from '../../middleware/auth.js';
-import { supabase } from '../../config/supabase.js';
+import { supabaseAdmin } from '../../config/supabase.js';
 import bcrypt from 'bcrypt';
 
 const router = express.Router();
@@ -8,7 +8,7 @@ const router = express.Router();
 // Get user favorites
 router.get('/favorites', authenticate, async (req, res) => {
     try {
-        const { data: favorites, error } = await supabase
+        const { data: favorites, error } = await supabaseAdmin
             .from('favorites')
             .select(`
         *,
@@ -35,7 +35,7 @@ router.get('/favorites/check', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'item_id and item_type are required' });
         }
 
-        const { data: favorite, error } = await supabase
+        const { data: favorite, error } = await supabaseAdmin
             .from('favorites')
             .select('id')
             .eq('user_id', req.user.id)
@@ -65,7 +65,7 @@ router.post('/favorites', authenticate, async (req, res) => {
         }
 
         // Check if already favorited
-        const { data: existing } = await supabase
+        const { data: existing } = await supabaseAdmin
             .from('favorites')
             .select('*')
             .eq('user_id', req.user.id)
@@ -77,7 +77,7 @@ router.post('/favorites', authenticate, async (req, res) => {
             return res.status(400).json({ message: 'Already in favorites' });
         }
 
-        const { data: favorite, error } = await supabase
+        const { data: favorite, error } = await supabaseAdmin
             .from('favorites')
             .insert([
                 {
@@ -103,7 +103,7 @@ router.delete('/favorites/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { error } = await supabase
+        const { error } = await supabaseAdmin
             .from('favorites')
             .delete()
             .eq('id', id)
@@ -124,7 +124,7 @@ router.put('/profile', authenticate, async (req, res) => {
         const { full_name } = req.body;
 
         // Update in Supabase Auth user metadata
-        const { data, error } = await supabase.auth.admin.updateUserById(
+        const { data, error } = await supabaseAdmin.auth.admin.updateUserById(
             req.user.id,
             {
                 user_metadata: { full_name }
@@ -150,7 +150,7 @@ router.put('/password', authenticate, async (req, res) => {
         }
 
         // Update password in Supabase Auth
-        const { error } = await supabase.auth.admin.updateUserById(
+        const { error } = await supabaseAdmin.auth.admin.updateUserById(
             req.user.id,
             { password: new_password }
         );
