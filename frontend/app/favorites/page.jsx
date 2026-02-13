@@ -160,67 +160,61 @@ export default function FavoritesPage() {
                             </Link>
                         </div>
                     ) : (
-                        /* Favorites Grid */
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {favorites.map((favorite) => (
-                                <div
-                                    key={favorite.id}
-                                    className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow group"
-                                >
-                                    {/* Pack Image */}
-                                    {favorite.pack?.image_url && (
-                                        <div className="aspect-video bg-gray-100 dark:bg-gray-900 overflow-hidden relative">
-                                            <img
-                                                src={favorite.pack.image_url}
-                                                alt={favorite.pack.name}
-                                                className="w-full h-full object-cover"
-                                            />
+                        /* Favorites List */
+                        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                                {favorites.map((favorite) => (
+                                    <div
+                                        key={favorite.id}
+                                        className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors group"
+                                    >
+                                        <div className="flex items-center justify-between gap-4">
+                                            {/* Pack Info */}
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                                    {favorite.pack?.name || 'Loading...'}
+                                                </h3>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
+                                                    {favorite.pack?.description}
+                                                </p>
+                                                <div className="mt-2 flex items-center gap-3">
+                                                    {/* Price Badge */}
+                                                    {favorite.pack?.price === 0 ? (
+                                                        <span className="inline-flex px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded">
+                                                            Free
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-semibold rounded">
+                                                            ${favorite.pack?.price}
+                                                        </span>
+                                                    )}
+                                                    {/* Type Badge */}
+                                                    <span className="text-xs text-gray-500 dark:text-gray-500 capitalize">
+                                                        {favorite.item_type}
+                                                    </span>
+                                                </div>
+                                            </div>
 
-                                            {/* Remove Favorite Button (appears on hover) */}
-                                            <button
-                                                onClick={() => handleRemoveFavorite(favorite.id)}
-                                                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
-                                                title="Remove from favorites"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
+                                            {/* Actions */}
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/packs/${favorite.pack?.slug || favorite.item_id}`}
+                                                    className="px-4 py-2 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white text-sm font-semibold rounded-lg hover:shadow-lg transition-all"
+                                                >
+                                                    View Details
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleRemoveFavorite(favorite.id)}
+                                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                                    title="Remove from favorites"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            </div>
                                         </div>
-                                    )}
-
-                                    {/* Pack Info */}
-                                    <div className="p-5">
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                                            {favorite.pack?.name}
-                                        </h3>
-
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
-                                            {favorite.pack?.description}
-                                        </p>
-
-                                        {/* Price Badge */}
-                                        <div className="mb-4">
-                                            {favorite.pack?.price === 0 ? (
-                                                <span className="inline-flex px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full">
-                                                    Free
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 text-xs font-semibold rounded-full">
-                                                    ${favorite.pack?.price}
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {/* Actions */}
-                                        <Link
-                                            href={`/packs/${favorite.pack?.slug || favorite.item_id}`}
-                                            className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all"
-                                        >
-                                            View Details
-                                            <ExternalLink className="w-4 h-4" />
-                                        </Link>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

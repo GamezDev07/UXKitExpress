@@ -10,11 +10,11 @@ import { useTheme } from '../context/ThemeContext'
 import ProfileMenu from './ProfileMenu'
 import PlanBadge from './PlanBadge'
 
-export default function Header({ userPlan = null, subscriptionInterval = null }) {
+export default function Header() {
     const pathname = usePathname()
     const router = useRouter()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-    const { user, signOut } = useAuth()
+    const { user, userPlan, signOut } = useAuth()
     const { isDark, toggleTheme } = useTheme()
 
     const navLinks = [
