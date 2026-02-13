@@ -9,7 +9,7 @@ export default function FavoriteButton({
     itemType = 'pack', // 'pack' | 'component' | 'template'
     className = ''
 }) {
-    const { user } = useAuth()
+    const { user, supabase } = useAuth()
     const [isFavorite, setIsFavorite] = useState(false)
     const [favoriteId, setFavoriteId] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -21,13 +21,22 @@ export default function FavoriteButton({
         }
     }, [user, itemId])
 
+    // Helper function to get auth token from Supabase session
+    const getAuthToken = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        return session?.access_token
+    }
+
     const checkFavoriteStatus = async () => {
         try {
+            const token = await getAuthToken()
+            if (!token) return
+
             const response = await fetch(
                 `${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites/check?item_id=${itemId}&item_type=${itemType}`,
                 {
                     headers: {
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     }
                 }
             )
@@ -53,6 +62,13 @@ export default function FavoriteButton({
         setIsLoading(true)
 
         try {
+            const token = await getAuthToken()
+            if (!token) {
+                console.error('No auth token available')
+                setIsLoading(false)
+                return
+            }
+
             if (isFavorite && favoriteId) {
                 // Remove from favorites
                 const response = await fetch(
@@ -60,7 +76,7 @@ export default function FavoriteButton({
                     {
                         method: 'DELETE',
                         headers: {
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            'Authorization': `Bearer ${token}`
                         }
                     }
                 )
@@ -68,6 +84,9 @@ export default function FavoriteButton({
                 if (response.ok) {
                     setIsFavorite(false)
                     setFavoriteId(null)
+                    console.log('✅ Removed from favorites')
+                } else {
+                    console.error('❌ Failed to remove favorite:', await response.text())
                 }
             } else {
                 // Add to favorites
@@ -77,7 +96,7 @@ export default function FavoriteButton({
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({
                             item_id: itemId,
@@ -86,11 +105,13 @@ export default function FavoriteButton({
                     }
                 )
 
-                const data = await response.json()
-
                 if (response.ok) {
+                    const data = await response.json()
                     setIsFavorite(true)
                     setFavoriteId(data.favorite.id)
+                    console.log('✅ Added to favorites')
+                } else {
+                    console.error('❌ Failed to add favorite:', await response.text())
                 }
             }
         } catch (error) {
