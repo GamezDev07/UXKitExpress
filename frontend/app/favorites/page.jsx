@@ -212,7 +212,7 @@ export default function FavoritesPage() {
 
                                         {/* Actions */}
                                         <Link
-                                            href={`/packs/${favorite.pack?.id}`}
+                                            href={`/packs/${favorite.pack?.slug || favorite.item_id}`}
                                             className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 dark:from-blue-500 dark:to-violet-500 text-white font-semibold rounded-lg hover:shadow-lg transition-all"
                                         >
                                             View Details
