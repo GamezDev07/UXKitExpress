@@ -8,20 +8,23 @@ const router = express.Router();
 // Get user favorites
 router.get('/favorites', authenticate, async (req, res) => {
     try {
+        console.log('📋 Fetching favorites for user:', req.user.id);
+
         const { data: favorites, error } = await supabaseAdmin
             .from('favorites')
-            .select(`
-        *,
-        pack:packs(*)
-      `)
+            .select('*')
             .eq('user_id', req.user.id)
             .order('created_at', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            console.error('❌ Supabase error:', error);
+            throw error;
+        }
 
+        console.log('✅ Favorites fetched:', favorites?.length || 0);
         res.json({ favorites });
     } catch (error) {
-        console.error('Error fetching favorites:', error);
+        console.error('❌ Error fetching favorites:', error);
         res.status(500).json({ message: 'Failed to fetch favorites' });
     }
 });
