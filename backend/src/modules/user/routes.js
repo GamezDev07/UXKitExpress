@@ -1,8 +1,9 @@
-const express = require('express');
+import express from 'express';
+import { authMiddleware } from '../../middleware/auth.js';
+import { supabase } from '../../config/supabase.js';
+import bcrypt from 'bcrypt';
+
 const router = express.Router();
-const { authMiddleware } = require('../../middleware/auth');
-const { supabase } = require('../../config/supabase');
-const bcrypt = require('bcrypt');
 
 // Get user favorites
 router.get('/favorites', authMiddleware, async (req, res) => {
@@ -92,7 +93,7 @@ router.post('/favorites', authMiddleware, async (req, res) => {
 
         res.status(201).json({ favorite });
     } catch (error) {
-        console.error(' Error adding favorite:', error);
+        console.error('Error adding favorite:', error);
         res.status(500).json({ message: 'Failed to add favorite' });
     }
 });
@@ -163,4 +164,4 @@ router.put('/password', authMiddleware, async (req, res) => {
     }
 });
 
-module.exports = router;
+export default router;
