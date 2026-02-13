@@ -54,7 +54,35 @@ export default function FavoritesPage() {
             console.log('📦 API Response:', data)
             console.log('📊 Favorites count:', data.favorites?.length || 0)
 
-            setFavorites(data.favorites || [])
+            // Fetch pack details for each favorite
+            if (data.favorites && data.favorites.length > 0) {
+                console.log('🎯 Fetching pack details for favorites...')
+                const favoritesWithPacks = await Promise.all(
+                    data.favorites.map(async (favorite) => {
+                        if (favorite.item_type === 'pack') {
+                            try {
+                                const packRes = await fetch(
+                                    `${process.env.NEXT_PUBLIC_API_URL}/api/packs/${favorite.item_id}`
+                                )
+                                if (packRes.ok) {
+                                    const packData = await packRes.json()
+                                    return { ...favorite, pack: packData.pack }
+                                }
+                                console.warn('⚠️ Pack not found:', favorite.item_id)
+                                return { ...favorite, pack: null }
+                            } catch (err) {
+                                console.error('❌ Error fetching pack:', err)
+                                return { ...favorite, pack: null }
+                            }
+                        }
+                        return favorite
+                    })
+                )
+                console.log('✅ Favorites with pack details:', favoritesWithPacks.filter(f => f.pack))
+                setFavorites(favoritesWithPacks)
+            } else {
+                setFavorites([])
+            }
         } catch (error) {
             console.error('❌ Error fetching favorites:', error)
         } finally {
