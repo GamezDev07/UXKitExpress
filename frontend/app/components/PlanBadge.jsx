@@ -116,7 +116,9 @@ export default function PlanBadge({
             {/* Content */}
             <span className="relative z-10 flex items-center gap-1.5">
                 {showIcon && config.icon}
-                <span>{config.label}</span>
+                <span className={config.hasLavaLamp ? 'text-lava-lamp' : ''}>
+                    {config.label}
+                </span>
             </span>
         </div>
     )
