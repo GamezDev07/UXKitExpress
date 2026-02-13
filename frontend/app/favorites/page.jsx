@@ -171,7 +171,7 @@ export default function FavoritesPage() {
                                         <div className="flex items-center justify-between gap-4">
                                             {/* Pack Info */}
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1 truncate">
+                                                <h3 className="text-base font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-500 mb-1 truncate transition-colors">
                                                     {favorite.pack?.name || 'Loading...'}
                                                 </h3>
                                                 <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-1">
