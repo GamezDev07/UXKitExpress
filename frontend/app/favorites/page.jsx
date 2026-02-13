@@ -62,7 +62,7 @@ export default function FavoritesPage() {
                         if (favorite.item_type === 'pack') {
                             try {
                                 const packRes = await fetch(
-                                    `${process.env.NEXT_PUBLIC_API_URL}/api/packs/${favorite.item_id}`
+                                    `${process.env.NEXT_PUBLIC_API_URL}/api/packs/by-id/${favorite.item_id}`
                                 )
                                 if (packRes.ok) {
                                     const packData = await packRes.json()
