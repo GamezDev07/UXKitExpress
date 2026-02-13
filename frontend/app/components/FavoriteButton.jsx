@@ -33,7 +33,7 @@ export default function FavoriteButton({
             if (!token) return
 
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites/check?item_id=${itemId}&item_type=${itemType}`,
+                `${process.env.NEXT_PUBLIC_API_URL}/api/favorites/check?item_id=${itemId}&item_type=${itemType}`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -72,7 +72,7 @@ export default function FavoriteButton({
             if (isFavorite && favoriteId) {
                 // Remove from favorites
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites/${favoriteId}`,
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/favorites/${favoriteId}`,
                     {
                         method: 'DELETE',
                         headers: {
@@ -91,7 +91,7 @@ export default function FavoriteButton({
             } else {
                 // Add to favorites
                 const response = await fetch(
-                    `${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites`,
+                    `${process.env.NEXT_PUBLIC_API_URL}/api/favorites`,
                     {
                         method: 'POST',
                         headers: {

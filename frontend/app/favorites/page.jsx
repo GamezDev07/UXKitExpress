@@ -8,7 +8,7 @@ import Header from '../components/Header'
 import Footer from '../components/Footer'
 
 export default function FavoritesPage() {
-    const { user } = useAuth()
+    const { user, supabase } = useAuth()
     const [favorites, setFavorites] = useState([])
     const [loading, setLoading] = useState(true)
 
@@ -18,11 +18,24 @@ export default function FavoritesPage() {
         }
     }, [user])
 
+    // Helper to get auth token
+    const getAuthToken = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        return session?.access_token
+    }
+
     const fetchFavorites = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites`, {
+            const token = await getAuthToken()
+            if (!token) {
+                console.error('No auth token available')
+                setLoading(false)
+                return
+            }
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/favorites`, {
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
@@ -37,10 +50,13 @@ export default function FavoritesPage() {
 
     const handleRemoveFavorite = async (favoriteId) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites/${favoriteId}`, {
+            const token = await getAuthToken()
+            if (!token) return
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/favorites/${favoriteId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 }
             })
 
