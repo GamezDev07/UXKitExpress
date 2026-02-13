@@ -26,23 +26,37 @@ export default function FavoritesPage() {
 
     const fetchFavorites = async () => {
         try {
+            console.log('🔍 Fetching favorites...')
             const token = await getAuthToken()
             if (!token) {
-                console.error('No auth token available')
+                console.error('❌ No auth token available')
                 setLoading(false)
                 return
             }
 
+            console.log('✅ Token obtained, making API call...')
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/favorites`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             })
 
+            console.log('📡 Response status:', response.status)
+
+            if (!response.ok) {
+                const errorText = await response.text()
+                console.error('❌ API Error:', errorText)
+                setLoading(false)
+                return
+            }
+
             const data = await response.json()
+            console.log('📦 API Response:', data)
+            console.log('📊 Favorites count:', data.favorites?.length || 0)
+
             setFavorites(data.favorites || [])
         } catch (error) {
-            console.error('Error fetching favorites:', error)
+            console.error('❌ Error fetching favorites:', error)
         } finally {
             setLoading(false)
         }
