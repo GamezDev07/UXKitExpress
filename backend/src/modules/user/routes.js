@@ -1,12 +1,12 @@
 import express from 'express';
-import { authMiddleware } from '../../middleware/auth.js';
+import { authenticate } from '../../middleware/auth.js';
 import { supabase } from '../../config/supabase.js';
 import bcrypt from 'bcrypt';
 
 const router = express.Router();
 
 // Get user favorites
-router.get('/favorites', authMiddleware, async (req, res) => {
+router.get('/favorites', authenticate, async (req, res) => {
     try {
         const { data: favorites, error } = await supabase
             .from('favorites')
@@ -27,7 +27,7 @@ router.get('/favorites', authMiddleware, async (req, res) => {
 });
 
 // Check if item is favorited
-router.get('/favorites/check', authMiddleware, async (req, res) => {
+router.get('/favorites/check', authenticate, async (req, res) => {
     try {
         const { item_id, item_type } = req.query;
 
@@ -56,7 +56,7 @@ router.get('/favorites/check', authMiddleware, async (req, res) => {
 });
 
 // Add to favorites
-router.post('/favorites', authMiddleware, async (req, res) => {
+router.post('/favorites', authenticate, async (req, res) => {
     try {
         const { item_id, item_type } = req.body;
 
@@ -99,7 +99,7 @@ router.post('/favorites', authMiddleware, async (req, res) => {
 });
 
 // Remove from favorites
-router.delete('/favorites/:id', authMiddleware, async (req, res) => {
+router.delete('/favorites/:id', authenticate, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -119,7 +119,7 @@ router.delete('/favorites/:id', authMiddleware, async (req, res) => {
 });
 
 // Update user profile
-router.put('/profile', authMiddleware, async (req, res) => {
+router.put('/profile', authenticate, async (req, res) => {
     try {
         const { full_name } = req.body;
 
@@ -141,7 +141,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
 });
 
 // Update password
-router.put('/password', authMiddleware, async (req, res) => {
+router.put('/password', authenticate, async (req, res) => {
     try {
         const { new_password } = req.body;
 
