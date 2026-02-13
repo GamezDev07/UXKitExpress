@@ -533,3 +533,57 @@
 .toast-loading {
   @apply !bg-blue-500 !text-white;
 }
+
+/* ===========================
+   LAVA LAMP BADGE
+   =========================== */
+
+/* Lava lamp effect for plan badges */
+@keyframes lava-lamp {
+
+  0%,
+  100% {
+    transform: translate(0%, 0%) scale(1);
+    opacity: 0.3;
+  }
+
+  25% {
+    transform: translate(20%, 15%) scale(1.1);
+    opacity: 0.4;
+  }
+
+  50% {
+    transform: translate(-15%, 20%) scale(0.9);
+    opacity: 0.35;
+  }
+
+  75% {
+    transform: translate(15%, -10%) scale(1.05);
+    opacity: 0.4;
+  }
+}
+
+.lava-lamp-badge {
+  @apply relative overflow-hidden;
+}
+
+.lava-lamp-bg {
+  @apply absolute inset-0 pointer-events-none;
+  width: 150%;
+  height: 150%;
+  top: -25%;
+  left: -25%;
+  z-index: 0;
+  filter: blur(20px);
+  opacity: 0.3;
+  animation: lava-lamp 12s ease-in-out infinite;
+}
+
+.dark .lava-lamp-bg {
+  opacity: 0.4;
+}
+
+/* Hover state - faster animation */
+.lava-lamp-badge:hover .lava-lamp-bg {
+  animation: lava-lamp 6s ease-in-out infinite;
+}

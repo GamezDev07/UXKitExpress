@@ -3,20 +3,17 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-    User,
     Download,
     Heart,
     Settings,
     CreditCard,
     LogOut,
     Moon,
-    Sun,
-    Crown,
-    Zap,
-    Shield
+    Sun
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import PlanBadge from './PlanBadge'
 
 export default function ProfileMenu() {
     const [isOpen, setIsOpen] = useState(false)
@@ -76,44 +73,9 @@ export default function ProfileMenu() {
         }
     }
 
-    // Get plan configuration
-    const getPlanConfig = () => {
-        const plan = user?.user_metadata?.plan || user?.current_plan || 'free'
-
-        const configs = {
-            free: {
-                label: 'Free',
-                color: 'bg-gray-500 text-white',
-                icon: <User className="w-3 h-3" />
-            },
-            basic: {
-                label: 'Basic',
-                color: 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white',
-                icon: <Zap className="w-3 h-3" />
-            },
-            advance: {
-                label: 'Advance',
-                color: 'bg-gradient-to-r from-purple-500 to-pink-500 text-white',
-                icon: <Shield className="w-3 h-3" />
-            },
-            pro: {
-                label: 'Pro',
-                color: 'bg-gradient-to-r from-amber-500 to-orange-500 text-white',
-                icon: <Crown className="w-3 h-3" />
-            },
-            enterprise: {
-                label: 'Enterprise',
-                color: 'bg-gradient-to-r from-red-600 to-rose-500 text-white',
-                icon: <Crown className="w-3 h-3" />
-            }
-        }
-
-        return configs[plan] || configs.free
-    }
-
-    const planConfig = getPlanConfig()
     const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User'
     const displayEmail = user?.email || ''
+    const userPlan = user?.current_plan || user?.user_metadata?.plan || 'free'
 
     return (
         <div className="relative" ref={menuRef}>
@@ -146,11 +108,8 @@ export default function ProfileMenu() {
                             </div>
                         </div>
 
-                        {/* Plan Badge */}
-                        <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${planConfig.color}`}>
-                            {planConfig.icon}
-                            <span>{planConfig.label}</span>
-                        </div>
+                        {/* Plan Badge with Lava Lamp Effect */}
+                        <PlanBadge plan={userPlan} size="md" />
                     </div>
 
                     {/* Menu Items */}

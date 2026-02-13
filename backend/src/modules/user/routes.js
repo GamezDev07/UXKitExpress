@@ -25,17 +25,51 @@ router.get('/favorites', authMiddleware, async (req, res) => {
     }
 });
 
+// Check if item is favorited
+router.get('/favorites/check', authMiddleware, async (req, res) => {
+    try {
+        const { item_id, item_type } = req.query;
+
+        if (!item_id || !item_type) {
+            return res.status(400).json({ message: 'item_id and item_type are required' });
+        }
+
+        const { data: favorite, error } = await supabase
+            .from('favorites')
+            .select('id')
+            .eq('user_id', req.user.id)
+            .eq('item_id', item_id)
+            .eq('item_type', item_type)
+            .maybeSingle();
+
+        if (error) throw error;
+
+        res.json({
+            isFavorite: !!favorite,
+            favoriteId: favorite?.id || null
+        });
+    } catch (error) {
+        console.error('Error checking favorite status:', error);
+        res.status(500).json({ message: 'Failed to check favorite status' });
+    }
+});
+
 // Add to favorites
 router.post('/favorites', authMiddleware, async (req, res) => {
     try {
-        const { pack_id } = req.body;
+        const { item_id, item_type } = req.body;
+
+        if (!item_id || !item_type) {
+            return res.status(400).json({ message: 'item_id and item_type are required' });
+        }
 
         // Check if already favorited
         const { data: existing } = await supabase
             .from('favorites')
             .select('*')
             .eq('user_id', req.user.id)
-            .eq('pack_id', pack_id)
+            .eq('item_id', item_id)
+            .eq('item_type', item_type)
             .single();
 
         if (existing) {
@@ -47,7 +81,8 @@ router.post('/favorites', authMiddleware, async (req, res) => {
             .insert([
                 {
                     user_id: req.user.id,
-                    pack_id
+                    item_id,
+                    item_type
                 }
             ])
             .select()
@@ -57,7 +92,7 @@ router.post('/favorites', authMiddleware, async (req, res) => {
 
         res.status(201).json({ favorite });
     } catch (error) {
-        console.error('Error adding favorite:', error);
+        console.error(' Error adding favorite:', error);
         res.status(500).json({ message: 'Failed to add favorite' });
     }
 });

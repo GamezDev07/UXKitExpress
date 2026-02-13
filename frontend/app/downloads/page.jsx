@@ -6,11 +6,13 @@ import { useAuth } from '../context/AuthContext'
 import Link from 'next/link'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
+import PlanBadge from '../components/PlanBadge'
 
 export default function DownloadsPage() {
     const { user } = useAuth()
     const [purchases, setPurchases] = useState([])
     const [loading, setLoading] = useState(true)
+    const userPlan = user?.current_plan || user?.user_metadata?.plan || 'free'
 
     useEffect(() => {
         if (user) {
@@ -158,6 +160,23 @@ export default function DownloadsPage() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Current Plan Display */}
+                    {purchases.length > 0 && (
+                        <div className="mt-12 p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                                        Your Current Plan
+                                    </h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        Manage your subscription and billing
+                                    </p>
+                                </div>
+                                <PlanBadge plan={userPlan} size="lg" />
+                            </div>
                         </div>
                     )}
                 </div>
