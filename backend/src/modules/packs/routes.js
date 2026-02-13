@@ -18,6 +18,29 @@ router.get('/', catchAsync(async (req, res) => {
     res.json({ packs });
 }));
 
+// GET /api/packs/by-id/:id - Obtener pack por ID (para favoritos)
+router.get('/by-id/:id', catchAsync(async (req, res) => {
+    const { id } = req.params;
+
+    console.log('=== GET PACK BY ID ===');
+    console.log('Pack ID:', id);
+
+    const { data: pack, error: packError } = await supabaseAdmin
+        .from('packs')
+        .select('*')
+        .eq('id', id)
+        .eq('is_published', true)
+        .single();
+
+    if (packError || !pack) {
+        console.log('Pack not found by ID:', id);
+        return res.status(404).json({ error: 'Pack no encontrado' });
+    }
+
+    console.log('Pack found:', pack.name);
+    res.json({ pack });
+}));
+
 // GET /api/packs/:slug - Obtener detalles de un pack
 router.get('/:slug', catchAsync(async (req, res) => {
     const { slug } = req.params;
