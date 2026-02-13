@@ -131,6 +131,18 @@ export function AuthProvider({ children }) {
     }
   }
 
+  // UPDATE USER
+  const updateUser = (userData) => {
+    setUser(prev => ({
+      ...prev,
+      ...userData
+    }))
+    // Update plan if it's in the userData
+    if (userData.user_metadata?.plan) {
+      setUserPlan(userData.user_metadata.plan)
+    }
+  }
+
   const value = {
     user,
     userPlan,
@@ -138,6 +150,7 @@ export function AuthProvider({ children }) {
     signIn,
     signUp,
     signOut,
+    updateUser,
     supabase
   }
 

@@ -7,12 +7,12 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import ProfileMenu from './ProfileMenu'
 
 export default function Header({ userPlan = null, subscriptionInterval = null }) {
     const pathname = usePathname()
     const router = useRouter()
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-    const [showLogoutModal, setShowLogoutModal] = useState(false)
     const { user, signOut } = useAuth()
     const { isDark, toggleTheme } = useTheme()
 
@@ -24,35 +24,6 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
     ]
 
     const isActive = (href) => pathname === href
-
-    const handleLogout = async () => {
-        try {
-            console.log('🚪 Logging out...')
-
-            // Close the modal first
-            setShowLogoutModal(false)
-
-            // Sign out from Supabase
-            await signOut()
-
-            // Clear all localStorage and sessionStorage
-            console.log('🧹 Clearing all storage...')
-            localStorage.clear()
-            sessionStorage.clear()
-
-            // Force a full page reload to /login to ensure clean state
-            console.log('✅ Logout successful, redirecting...')
-            window.location.href = '/login'
-
-        } catch (error) {
-            console.error('❌ Error al cerrar sesión:', error)
-
-            // Even on error, clear everything and redirect
-            localStorage.clear()
-            sessionStorage.clear()
-            window.location.href = '/login'
-        }
-    }
 
     return (
         <header className="border-b border-gray-200 dark:border-white/10 backdrop-blur-sm sticky top-0 z-50 bg-white/80 dark:bg-slate-950/80">
@@ -100,7 +71,7 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
                             )}
                         </button>
 
-                        {/* Auth Button - Check user object, not userPlan */}
+                        {/* Auth Button - Use ProfileMenu for logged-in users */}
                         {!user ? (
                             <Link
                                 href="/login"
@@ -109,22 +80,7 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
                                 Iniciar Sesión
                             </Link>
                         ) : (
-                            <div className="flex items-center gap-3">
-                                <button
-                                    className="p-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all opacity-50 cursor-not-allowed"
-                                    disabled
-                                    title="Próximamente"
-                                >
-                                    <User className="w-5 h-5 text-white" />
-                                </button>
-                                <button
-                                    onClick={() => setShowLogoutModal(true)}
-                                    className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white rounded-lg transition-all hover:bg-gradient-to-r hover:from-red-600 hover:via-red-500 hover:to-orange-500 dark:hover:from-blue-500 dark:hover:to-violet-500"
-                                >
-                                    <LogOut className="w-4 h-4" />
-                                    <span className="text-sm">Salir</span>
-                                </button>
-                            </div>
+                            <ProfileMenu />
                         )}
                     </nav>
 
@@ -191,9 +147,17 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
                                 </Link>
                             ) : (
                                 <button
-                                    onClick={() => {
+                                    onClick={async () => {
                                         setMobileMenuOpen(false);
-                                        setShowLogoutModal(true);
+                                        try {
+                                            await signOut();
+                                            localStorage.clear();
+                                            sessionStorage.clear();
+                                            window.location.href = '/login';
+                                        } catch (error) {
+                                            console.error('Error logging out:', error);
+                                            window.location.href = '/login';
+                                        }
                                     }}
                                     className="flex items-center gap-2 px-4 py-2 bg-white/10 rounded-lg hover:bg-white/20 transition-all text-white"
                                 >
@@ -205,35 +169,6 @@ export default function Header({ userPlan = null, subscriptionInterval = null })
                     </div>
                 )}
             </div>
-
-            {/* Logout Confirmation Modal - Rendered via Portal */}
-            {showLogoutModal && typeof document !== 'undefined' && createPortal(
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999] p-4">
-                    <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-sm w-full">
-                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-                            ¿Cerrar sesión?
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300 mb-6">
-                            ¿Estás seguro de que deseas salir de tu cuenta?
-                        </p>
-                        <div className="flex gap-3 justify-end">
-                            <button
-                                onClick={() => setShowLogoutModal(false)}
-                                className="px-4 py-2 rounded bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleLogout}
-                                className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition-colors"
-                            >
-                                Cerrar sesión
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
         </header>
     )
 }

@@ -578,4 +578,51 @@ router.post('/create-portal-session', authenticate, catchAsync(async (req, res) 
   res.json({ url: session.url });
 }));
 
+// Get user purchases
+router.get('/purchases', authenticate, catchAsync(async (req, res) => {
+  const userId = req.user.sub || req.user.id || req.user.userId;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Usuario no autenticado' });
+  }
+
+  const { data: purchases, error } = await supabaseAdmin
+    .from('purchases')
+    .select(`
+      *,
+      pack:packs(*)
+    `)
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    logger.error('Error fetching purchases:', error);
+    throw error;
+  }
+
+  res.json({ purchases });
+}));
+
+// Create billing portal session (updated alias)
+router.post('/portal', authenticate, catchAsync(async (req, res) => {
+  const userId = req.user.sub || req.user.id || req.user.userId;
+
+  const { data: user } = await supabaseAdmin
+    .from('users')
+    .select('stripe_customer_id')
+    .eq('id', userId)
+    .single();
+
+  if (!user?.stripe_customer_id) {
+    return res.status(400).json({ error: 'No hay cliente de Stripe asociado' });
+  }
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: user.stripe_customer_id,
+    return_url: `${process.env.FRONTEND_URL}/dashboard`,
+  });
+
+  res.json({ url: session.url });
+}));
+
 export default router;
